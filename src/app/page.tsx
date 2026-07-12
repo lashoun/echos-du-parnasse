@@ -1,10 +1,16 @@
 import Link from 'next/link'
 import PageShell from '@/components/page-shell'
+import DismissableBanner from '@/components/dismissable-banner'
 import PoemCard from '@/components/poem-card'
 import StateMessage from '@/components/state-message'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ message?: string }>
+}) {
+  const { message } = await searchParams
   const supabase = await createSupabaseServerClient()
 
   // Get total poem count for daily random selection
@@ -73,6 +79,8 @@ export default async function HomePage() {
           Bibliothèque numérique de poésie du domaine public
         </p>
       </header>
+
+      {message && <DismissableBanner message={message} />}
 
       <section>
         <Link href={`/poems/${poem.id}`}>

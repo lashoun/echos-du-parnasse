@@ -119,6 +119,7 @@ supabase/
 | `/about`                | Project info, features, sources, contact        |
 | `/privacy`              | Privacy policy (email, localStorage, cookies)   |
 | `/legal`                | Mentions légales (editor, hosting, license)     |
+| `/account`              | Account settings & account deletion             |
 | `/login`                | Email/password login & signup                   |
 | `/auth/callback`        | OAuth code exchange handler                     |
 | `/auth/signout`         | POST signout handler                            |

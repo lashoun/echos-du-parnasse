@@ -6,7 +6,7 @@ Digital library for public-domain poetry (French-first). Next.js 16 + Supabase.
 
 - **Stack:** Next.js 16 (App Router), React 19, TypeScript 5 (strict), Tailwind CSS v4, Supabase (PostgreSQL + Auth), pnpm, Prettier 3 + eslint-config-prettier + prettier-plugin-tailwindcss
 - **Entry point:** `src/app/layout.tsx` (root layout, `<html lang="fr">`, Geist font, `SiteHeader`)
-- **Pages:** `/` homepage, `/poems` browse+filter+search, `/poems/[id]` detail, `/about`, `/privacy`, `/legal`, `/collections` / `/collections/[id]`, `/tags/[id]`, `/authors/[id]`, `/login`, `/auth/callback`, `/auth/signout`
+- **Pages:** `/` homepage, `/poems` browse+filter+search, `/poems/[id]` detail, `/account` settings + delete, `/about`, `/privacy`, `/legal`, `/collections` / `/collections/[id]`, `/tags/[id]`, `/authors/[id]`, `/login`, `/auth/callback`, `/auth/signout`
 - **Database:** Supabase PostgreSQL with 6 tables (authors, collections, poems, tags, poem_tags, user_poem_status) + RLS. Migrations in `supabase/migrations/`.
 
 ## Commands
@@ -48,7 +48,7 @@ Digital library for public-domain poetry (French-first). Next.js 16 + Supabase.
 - **Tailwind:** v4 CSS-first config. Dark mode via `prefers-color-scheme` media query.
 - **Error handling:** Per-route `error.tsx` and `loading.tsx` for `/poems` and `/poems/[id]`.
 - **Strings:** All user-facing text in French.
-- **Auth:** Server actions at `/login`. Signup passes `emailRedirectTo` from `SITE_URL` env var. OAuth callback at `/auth/callback`. Signout via POST to `/auth/signout`.
+- **Auth:** Server actions at `/login`. Signup passes `emailRedirectTo` from `SITE_URL` env var. OAuth callback at `/auth/callback`. Signout via POST to `/auth/signout`. Account deletion at `/account` uses the service role key via `auth.admin.deleteUser()` (cascades to `user_poem_status`).
 - **Seed script:** `INSERT` with manual existence check, never `upsert`. Content-differing duplicates get a disambiguated title with the first verse line in parentheses.
 - **Content normalization:** Curly apostrophes (U+2019) → straight (U+0027). Consecutive newlines → max 2. Titles from Wikisource page URLs (already correct French casing).
 - **Security headers:** `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin` set in `next.config.ts`.
