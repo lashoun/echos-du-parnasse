@@ -7,7 +7,10 @@ export const metadata: Metadata = {
 }
 
 const githubUser = process.env.GITHUB_USERNAME ?? ''
-const issuesUrl = `https://github.com/${githubUser}/echos-du-parnasse/issues`
+const githubRepo = process.env.GITHUB_REPO ?? ''
+const issuesUrl = githubUser
+  ? `https://github.com/${githubUser}/${githubRepo}/issues`
+  : '#'
 
 export default function LegalPage() {
   return (
