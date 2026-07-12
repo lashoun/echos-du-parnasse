@@ -22,15 +22,38 @@ export default async function PoemsPage({
   const showRandom = filters.random === '1'
   const supabase = await createSupabaseServerClient()
 
-  // Fetch filter options
-  const [{ data: authors }, { data: collections }, { data: tags }] =
-    await Promise.all([
-      supabase.from('authors').select('id, name').order('name'),
-      supabase.from('collections').select('id, title').order('title'),
-      supabase.from('tags').select('id, name').order('name'),
-    ])
+  // Fetch filter options + relationship data for cascading filters
+  const [
+    { data: authors },
+    { data: collections },
+    { data: tags },
+    { data: poemTags },
+    { data: allPoems },
+  ] = await Promise.all([
+    supabase.from('authors').select('id, name').order('name'),
+    supabase.from('collections').select('id, title, author_id').order('title'),
+    supabase.from('tags').select('id, name').order('name'),
+    supabase.from('poem_tags').select('tag_id, poem_id'),
+    supabase.from('poems').select('id, author_id, collection_id'),
+  ])
 
-
+  // Build tag → author/collection relationships for cascading filters
+  const poemMap = new Map((allPoems ?? []).map((p: any) => [p.id, p]))
+  const tagRelationships: {
+    tagId: string
+    authorId: string
+    collectionId: string | null
+  }[] = (poemTags ?? []).flatMap((pt: any) => {
+    const poem = poemMap.get(pt.poem_id)
+    if (!poem) return []
+    return [
+      {
+        tagId: pt.tag_id,
+        authorId: poem.author_id,
+        collectionId: poem.collection_id ?? null,
+      },
+    ]
+  })
 
   // Build the query dynamically
   let query = supabase.from('poems').select('id, title, content, author_id')
@@ -58,8 +81,6 @@ export default async function PoemsPage({
     const ids = poemIds?.map((pt) => pt.poem_id) ?? []
     if (ids.length > 0) {
       query = query.in('id', ids)
-    } else {
-      // No poems match this tag — still render (empty state handled below)
     }
   }
 
@@ -126,20 +147,6 @@ export default async function PoemsPage({
     hasTagFilter
   const totalPoems = !hasActiveFilters ? (poems?.length ?? 0) : null
 
-  // Build a URL with current filters (but without random)
-  function filterUrl(extra: Record<string, string>): string {
-    const params = new URLSearchParams()
-    if (filters.q) params.set('q', filters.q)
-    if (filters.author) params.set('author', filters.author)
-    if (filters.collection) params.set('collection', filters.collection)
-    if (filters.tag) params.set('tag', filters.tag)
-    for (const [k, v] of Object.entries(extra)) {
-      if (v) params.set(k, v)
-    }
-    const qs = params.toString()
-    return qs ? `/poems?${qs}` : '/poems'
-  }
-
   return (
     <PageShell>
       <header className="mb-8">
@@ -156,6 +163,7 @@ export default async function PoemsPage({
         authors={authors ?? []}
         collections={collections ?? []}
         tags={tags ?? []}
+        tagRelationships={tagRelationships}
       />
 
       {showRandom && randomPoem ? (
@@ -181,7 +189,6 @@ export default async function PoemsPage({
 
       {!showRandom && (
         <>
-
           {poems && poems.length > 0 && (
             <p className="mb-4 text-sm text-stone-500 dark:text-stone-400">
               {poems.length} poème{poems.length > 1 ? 's' : ''}

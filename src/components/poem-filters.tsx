@@ -1,11 +1,23 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 interface FilterOption {
   id: string
   name: string
+}
+
+interface CollectionOption {
+  id: string
+  title: string
+  author_id: string | null
+}
+
+interface TagRelationship {
+  tagId: string
+  authorId: string
+  collectionId: string | null
 }
 
 interface PoemFiltersProps {
@@ -14,8 +26,9 @@ interface PoemFiltersProps {
   collection?: string
   tag?: string
   authors: FilterOption[]
-  collections: { id: string; title: string }[]
+  collections: CollectionOption[]
   tags: FilterOption[]
+  tagRelationships: TagRelationship[]
 }
 
 export default function PoemFilters({
@@ -26,6 +39,7 @@ export default function PoemFilters({
   authors,
   collections,
   tags,
+  tagRelationships,
 }: PoemFiltersProps) {
   const router = useRouter()
 
@@ -33,6 +47,35 @@ export default function PoemFilters({
   const [authorValue, setAuthorValue] = useState(author ?? '')
   const [collectionValue, setCollectionValue] = useState(collection ?? '')
   const [tagValue, setTagValue] = useState(tag ?? '')
+
+  // Compute available collections based on selected author
+  const availableCollections = useMemo(() => {
+    if (!authorValue) return collections
+    return collections.filter((c) => c.author_id === authorValue)
+  }, [authorValue, collections])
+
+  // Compute available authors based on selected collection
+  const availableAuthors = useMemo(() => {
+    if (!collectionValue) return authors
+    const coll = collections.find((c) => c.id === collectionValue)
+    if (!coll?.author_id) return authors
+    return authors.filter((a) => a.id === coll.author_id)
+  }, [collectionValue, authors, collections])
+
+  // Compute available tags based on selected author and/or collection
+  const availableTags = useMemo(() => {
+    let rels = tagRelationships
+
+    if (authorValue) {
+      rels = rels.filter((r) => r.authorId === authorValue)
+    }
+    if (collectionValue) {
+      rels = rels.filter((r) => r.collectionId === collectionValue)
+    }
+
+    const validTagIds = new Set(rels.map((r) => r.tagId))
+    return tags.filter((t) => validTagIds.has(t.id))
+  }, [authorValue, collectionValue, tagRelationships, tags])
 
   function applyFilters() {
     const params = new URLSearchParams()
@@ -67,11 +110,20 @@ export default function PoemFilters({
       <div className="flex flex-wrap gap-2">
         <select
           value={authorValue}
-          onChange={(e) => setAuthorValue(e.target.value)}
-          className="rounded border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-700 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300"
+          onChange={(e) => {
+            setAuthorValue(e.target.value)
+            if (e.target.value && collectionValue) {
+              const coll = collections.find((c) => c.id === collectionValue)
+              if (coll && coll.author_id !== e.target.value) {
+                setCollectionValue('')
+                setTagValue('')
+              }
+            }
+          }}
+          className="flex-[3] rounded border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-700 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300"
         >
           <option value="">Tous les auteurs</option>
-          {authors.map((a) => (
+          {availableAuthors.map((a) => (
             <option key={a.id} value={a.id}>
               {a.name}
             </option>
@@ -80,11 +132,19 @@ export default function PoemFilters({
 
         <select
           value={collectionValue}
-          onChange={(e) => setCollectionValue(e.target.value)}
-          className="rounded border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-700 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300"
+          onChange={(e) => {
+            const newVal = e.target.value
+            setCollectionValue(newVal)
+            if (newVal) {
+              const coll = collections.find((c) => c.id === newVal)
+              if (coll?.author_id) setAuthorValue(coll.author_id)
+              setTagValue('')
+            }
+          }}
+          className="flex-[5] rounded border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-700 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300"
         >
           <option value="">Toutes les collections</option>
-          {collections.map((c) => (
+          {availableCollections.map((c) => (
             <option key={c.id} value={c.id}>
               {c.title}
             </option>
@@ -94,15 +154,18 @@ export default function PoemFilters({
         <select
           value={tagValue}
           onChange={(e) => setTagValue(e.target.value)}
-          className="rounded border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-700 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300"
+          className="flex-[2] rounded border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-700 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300"
         >
           <option value="">Tous les tags</option>
-          {tags.map((t) => (
+          {availableTags.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name}
             </option>
           ))}
         </select>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
 
         <button
           onClick={() => {
@@ -133,6 +196,11 @@ export default function PoemFilters({
           Réinitialiser
         </button>
       </div>
+      {availableTags.length === 0 && tags.length > 0 && (
+        <p className="text-xs text-stone-400 dark:text-stone-500">
+          Aucun tag disponible pour la sélection actuelle.
+        </p>
+      )}
     </div>
   )
 }
