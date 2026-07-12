@@ -27,7 +27,7 @@ export default async function HomePage() {
   const dateStr = new Date().toISOString().slice(0, 10) // "2026-07-06"
   let hash = 0
   for (let i = 0; i < dateStr.length; i++) {
-    hash = ((hash << 5) - hash) + dateStr.charCodeAt(i)
+    hash = (hash << 5) - hash + dateStr.charCodeAt(i)
     hash |= 0
   }
   const index = Math.abs(hash) % count
@@ -75,15 +75,17 @@ export default async function HomePage() {
       </header>
 
       <section>
-        <PoemCard
-          poem={{
-            id: poem.id,
-            title: poem.title,
-            content: poem.content,
-            author_name: authorName,
-          }}
-          variant="featured"
-        />
+        <Link href={`/poems/${poem.id}`}>
+          <PoemCard
+            poem={{
+              id: poem.id,
+              title: poem.title,
+              content: poem.content,
+              author_name: authorName,
+            }}
+            variant="full"
+          />
+        </Link>
       </section>
 
       <nav className="mt-8 flex flex-wrap gap-x-6 gap-y-2">
@@ -94,7 +96,7 @@ export default async function HomePage() {
           Parcourir tous les poèmes →
         </Link>
         <Link
-          href="/random"
+          href="/poems?random=1"
           className="text-sm font-medium text-stone-600 underline underline-offset-2 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-200"
         >
           Poème au hasard →
@@ -106,7 +108,7 @@ export default async function HomePage() {
           Collections →
         </Link>
         <Link
-          href="/search"
+          href="/poems"
           className="text-sm font-medium text-stone-600 underline underline-offset-2 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-200"
         >
           Rechercher →

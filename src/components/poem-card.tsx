@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { usePoemStatus } from '@/lib/use-poem-status'
-import { truncate } from '@/lib/utils'
 
 interface Poem {
   id: string
@@ -13,7 +12,7 @@ interface Poem {
 
 interface PoemCardProps {
   poem: Poem
-  variant?: 'featured' | 'list'
+  variant?: 'list' | 'full'
 }
 
 function StatusIcons({ poemId }: { poemId: string }) {
@@ -59,9 +58,9 @@ function StatusIcons({ poemId }: { poemId: string }) {
 }
 
 export default function PoemCard({ poem, variant = 'list' }: PoemCardProps) {
-  if (variant === 'featured') {
+  if (variant === 'full') {
     return (
-      <article className="rounded-lg border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-700 dark:bg-stone-800">
+      <article className="rounded-lg border border-stone-200 bg-white p-6 shadow-sm transition-colors hover:border-stone-400 dark:border-stone-700 dark:bg-stone-800 dark:hover:border-stone-500">
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-xl font-semibold text-stone-900 dark:text-stone-100">
@@ -75,15 +74,9 @@ export default function PoemCard({ poem, variant = 'list' }: PoemCardProps) {
           </div>
           <StatusIcons poemId={poem.id} />
         </div>
-        <p className="mt-4 leading-relaxed whitespace-pre-wrap text-stone-700 dark:text-stone-300">
-          {truncate(poem.content, 400)}
-        </p>
-        <Link
-          href={`/poems/${poem.id}`}
-          className="mt-4 inline-block text-sm font-medium text-stone-500 underline underline-offset-2 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200"
-        >
-          Lire le poème →
-        </Link>
+        <div className="mt-4 leading-relaxed whitespace-pre-wrap text-stone-700 dark:text-stone-300">
+          {poem.content}
+        </div>
       </article>
     )
   }
@@ -105,7 +98,8 @@ export default function PoemCard({ poem, variant = 'list' }: PoemCardProps) {
           <StatusIcons poemId={poem.id} />
         </div>
         <p className="mt-2 text-sm leading-relaxed text-stone-600 dark:text-stone-400">
-          {truncate(poem.content, 150)}
+          {poem.content.substring(0, 150)}
+          {poem.content.length > 150 ? '…' : ''}
         </p>
       </Link>
     </article>
