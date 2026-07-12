@@ -26,15 +26,15 @@ Digital library for public-domain poetry (French-first). Next.js 16 + Supabase.
 
 ## Architecture
 
-- **`src/app/`** — Next.js App Router pages. Homepage (`/`) features a daily poem: deterministic hash of `YYYY-MM-DD` picks a random index from total count.
-- **`src/components/`** — Shared UI: `PageShell`, `SiteHeader`, `SiteFooter` (legal links), `PoemCard` (list/full variants), `PoemFilters` (cascading author/collection/tag selects + search + random), `PoemStatusToggle`, `StateMessage`.
+- **`src/app/`** — Next.js App Router pages. Homepage (`/`) shows daily featured poem via deterministic hash of date. Displays `DismissableBanner` when `?message=` is set (account deletion, etc.). `/account` shows user email and allows account deletion with confirmation.
+- **`src/components/`** — Shared UI: `PageShell`, `SiteHeader` (Compte/email/Déconnexion when logged in), `SiteFooter` (legal links), `PoemCard` (list/full variants), `PoemFilters` (cascading filters + search + random), `PoemStatusToggle`, `DismissableBanner` (closable message banner), `StateMessage`.
 - **`src/lib/supabase/`** — Three Supabase client factories + proxy session refresh.
 - **`src/lib/use-poem-status.ts`** — Hook for read/favorite tracking. Completely disjoint: when logged in, reads/writes Supabase `user_poem_status` only; when logged out, reads/writes localStorage only. No sync between the two.
 - **`src/proxy.ts`** — Next.js 16 proxy, refreshes Supabase auth session.
 - **`src/types/database.ts`** — Hand-crafted `Database` type for Supabase type inference.
 - **`scripts/seed.ts`** — Standalone Node script. Reads JSON in two formats (single-object scraper output or array of sample entries). Handles `tags?: string[]` on poems: creates tags via `ensureTag()`, links via `linkPoemTag()`. Requires `--from` (glob patterns supported). Supports `--reset`.
 - **`scripts/scrape-wikisource.ts`** — Wikisource scraper. Uses page URL for titles (already correct French casing), preserves parenthetical disambiguation for uniqueness. Normalizes curly apostrophes, newlines. 1.2s rate limiting.
-- **`scripts/convert-latex-sonnets.js`** — LaTeX sonnet converter (no deps). Reads `data/latex/{author}.tex` files. Parses `\sonnet` commands with optional epigraphs, subtitle, and content. Title logic: empty reuses previous, roman numerals get `–` separator, subtitles in `()`. Normalizes accents, `\\`/`\\!` to newlines, `\vin` to tab. Outputs JSON with `tags: ['sonnet']`.
+- **`scripts/convert-latex-sonnets.js`** — LaTeX sonnet converter (no deps). Reads `data/latex/{author}.tex` files. Parses `\sonnet` commands with optional epigraphs, subtitle, and content. Title logic: empty reuses previous, roman numerals get `— ` separator, subtitles in `()`. Normalizes accents, `\\`/`\\!` to newlines, `\vin` to tab, `---`/`--` to em/en-dash. Adds French non-breaking spaces before punctuation (narrow U+202F for `!?;`, regular U+00A0 for `:`). Outputs JSON with `tags: ['sonnet']`.
 
 ## Conventions
 
@@ -50,7 +50,7 @@ Digital library for public-domain poetry (French-first). Next.js 16 + Supabase.
 - **Strings:** All user-facing text in French.
 - **Auth:** Server actions at `/login`. Signup passes `emailRedirectTo` from `SITE_URL` env var. OAuth callback at `/auth/callback`. Signout via POST to `/auth/signout`. Account deletion at `/account` uses the service role key via `auth.admin.deleteUser()` (cascades to `user_poem_status`).
 - **Seed script:** `INSERT` with manual existence check, never `upsert`. Content-differing duplicates get a disambiguated title with the first verse line in parentheses.
-- **Content normalization:** Curly apostrophes (U+2019) → straight (U+0027). Consecutive newlines → max 2. Titles from Wikisource page URLs (already correct French casing).
+- **Content normalization:** Curly apostrophes (U+2019) → straight (U+0027). Consecutive newlines → max 2. French non-breaking spaces: narrow U+202F before `!?;`, regular U+00A0 before `:`. Titles from Wikisource page URLs (already correct French casing).
 - **Security headers:** `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin` set in `next.config.ts`.
 
 ## Env vars

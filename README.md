@@ -78,7 +78,15 @@ Open [http://localhost:3000](http://localhost:3000).
 ```
 src/
 ├── app/                  Next.js App Router (pages, layout, route handlers)
-├── components/           Shared UI components (PoemCard, SiteHeader, etc.)
+├── components/
+│   ├── dismissable-banner.tsx  Closable message banner
+│   ├── poem-card.tsx     Poem display (list + full variants)
+│   ├── poem-filters.tsx  Cascading search/filter controls
+│   ├── poem-status-toggle.tsx  Read/favorite buttons
+│   ├── page-shell.tsx    Page layout wrapper
+│   ├── site-footer.tsx   Footer with legal links
+│   ├── site-header.tsx   Auth-aware navigation
+│   └── state-message.tsx Empty/error state display
 ├── lib/
 │   ├── supabase/
 │   │   ├── env.ts        Lazy env-var guard
