@@ -84,7 +84,8 @@ src/
 │   │   ├── env.ts        Lazy env-var guard
 │   │   ├── server.ts     Server client (RSC, route handlers)
 │   │   └── client.ts     Browser client (client components)
-│   ├── use-poem-status.ts  localStorage read/favorite hook
+│   ├── use-poem-status.ts  Auth-aware read/favorite hook (Supabase + localStorage)
+│   ├── merge-status.tsx    Login sync component
 │   └── utils.ts          Shared helpers
 ├── proxy.ts              Supabase auth session refresh
 └── types/database.ts     Schema types
@@ -159,7 +160,6 @@ GNU General Public License v3.0. See [LICENSE](./LICENSE).
 
 ## Known Issues / TODO
 
-- localStorage merge on login not yet wired up (hook and helpers exist)
 - No author listing page (only detail page via `/authors/[id]`)
 - No test suite
 - Dark mode uses `prefers-color-scheme` media query (no manual toggle)

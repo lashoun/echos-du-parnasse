@@ -29,7 +29,8 @@ Digital library for public-domain poetry (French-first). Next.js 16 + Supabase.
 - **`src/app/`** — Next.js App Router pages. Homepage (`/`) features a daily poem: deterministic hash of `YYYY-MM-DD` picks a random index from total count.
 - **`src/components/`** — Shared UI: `PageShell`, `SiteHeader`, `SiteFooter` (legal links), `PoemCard` (list/full variants), `PoemFilters` (cascading author/collection/tag selects + search + random), `PoemStatusToggle`, `StateMessage`.
 - **`src/lib/supabase/`** — Three Supabase client factories + proxy session refresh.
-- **`src/lib/use-poem-status.ts`** — Hook for anonymous read/favorite tracking via localStorage.
+- **`src/lib/use-poem-status.ts`** — Hook for read/favorite tracking. Auth-aware: when logged in, reads from and writes to Supabase `user_poem_status` table; when logged out, uses localStorage. Also exports `getAllPoemStatuses()`, `clearAllPoemStatuses()`, and `mergeLocalStatuses()` (bulk-upserts localStorage data into Supabase and clears it).
+- **`src/components/merge-status.tsx`** — Client component added to root layout. On mount, checks if user is logged in and has localStorage data — if so, calls `mergeLocalStatuses()` to sync bookmarks into Supabase.
 - **`src/proxy.ts`** — Next.js 16 proxy, refreshes Supabase auth session.
 - **`src/types/database.ts`** — Hand-crafted `Database` type for Supabase type inference.
 - **`scripts/seed.ts`** — Standalone Node script. Reads JSON in two formats (single-object scraper output or array of sample entries). Handles `tags?: string[]` on poems: creates tags via `ensureTag()`, links via `linkPoemTag()`. Defaults to `data/sample-poems.json`. Supports `--reset`.
