@@ -18,17 +18,13 @@ import { createClient } from '@supabase/supabase-js'
 
 dotenv.config({ path: '.env.local' })
 
-// ── Config ────────────────────────────────────────────────────────────
-
 const supabaseUrl =
   process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
 const secretKey = process.env.SUPABASE_SECRET_KEY
-
 if (!supabaseUrl || !secretKey) {
   console.error('Missing SUPABASE_URL or SUPABASE_SECRET_KEY')
   process.exit(1)
 }
-
 const supabase = createClient(supabaseUrl, secretKey)
 
 // ── Types ─────────────────────────────────────────────────────────────
@@ -39,8 +35,8 @@ interface ScraperPoem {
   language: string
   collection?: string | null
   source_url?: string
+  tags?: string[]
 }
-
 interface ScraperOutput {
   author?: string | null
   author_bio?: string | null
@@ -49,7 +45,6 @@ interface ScraperOutput {
   poems: ScraperPoem[]
   errors?: { title: string; reason: string }[]
 }
-
 interface SampleEntry {
   author: string
   author_bio?: string | null
@@ -57,14 +52,14 @@ interface SampleEntry {
   author_death_year?: number | null
   poems: ScraperPoem[]
 }
-
-// ── CLI args ──────────────────────────────────────────────────────────
-
 interface CliArgs {
   from: string[]
   author?: string
   reset?: boolean
 }
+type InsertResult = { id: string } | false
+
+// ── CLI ────────────────────────────────────────────────────────────────
 
 function parseArgs(argv: string[]): CliArgs {
   const args: CliArgs = { from: [] }
@@ -111,7 +106,7 @@ async function ensureAuthor(name: string): Promise<string | null> {
     .eq('name', name)
     .maybeSingle()
   if (existing) return existing.id
-  const { data: inserted, error } = await supabase
+  const { data: i, error } = await supabase
     .from('authors')
     .insert({ name })
     .select('id')
@@ -120,8 +115,8 @@ async function ensureAuthor(name: string): Promise<string | null> {
     console.error(`  ❌ Failed to create author "${name}": ${error.message}`)
     return null
   }
-  console.log(`  ✅ Author created: ${name} (${inserted.id})`)
-  return inserted.id
+  console.log(`  ✅ Author created: ${name} (${i.id})`)
+  return i.id
 }
 
 async function updateAuthorBio(
@@ -154,7 +149,7 @@ async function ensureCollection(
     .eq('author_id', authorId)
     .maybeSingle()
   if (existing) return existing.id
-  const { data: inserted, error } = await supabase
+  const { data: i, error } = await supabase
     .from('collections')
     .insert({ title, author_id: authorId })
     .select('id')
@@ -166,7 +161,36 @@ async function ensureCollection(
     return null
   }
   console.log(`  ✅ Collection created: ${title}`)
-  return inserted.id
+  return i.id
+}
+
+async function ensureTag(name: string): Promise<string | null> {
+  const { data: existing } = await supabase
+    .from('tags')
+    .select('id')
+    .eq('name', name)
+    .maybeSingle()
+  if (existing) return existing.id
+  const { data: i, error } = await supabase
+    .from('tags')
+    .insert({ name })
+    .select('id')
+    .single()
+  if (error) {
+    console.error(`  ❌ Failed to create tag "${name}": ${error.message}`)
+    return null
+  }
+  return i.id
+}
+
+async function linkPoemTag(poemId: string, tagId: string) {
+  const { error } = await supabase
+    .from('poem_tags')
+    .upsert(
+      { poem_id: poemId, tag_id: tagId },
+      { onConflict: 'poem_id,tag_id' },
+    )
+  if (error) console.error(`  ❌ Failed to link tag: ${error.message}`)
 }
 
 function firstLine(text: string): string {
@@ -188,7 +212,7 @@ async function insertPoem(
   language: string,
   authorId: string,
   collectionId?: string | null,
-): Promise<boolean> {
+): Promise<InsertResult> {
   const { data: existing } = await supabase
     .from('poems')
     .select('id, content, collection_id')
@@ -196,17 +220,16 @@ async function insertPoem(
     .eq('author_id', authorId)
     .maybeSingle()
   if (existing) {
-    const existingContent = (existing as any).content ?? ''
-    const existingCollId = (existing as any).collection_id ?? null
-    if (collectionId && !existingCollId) {
+    const ec = (existing as any).content ?? ''
+    const eci = (existing as any).collection_id ?? null
+    if (collectionId && !eci)
       await supabase
         .from('poems')
         .update({ collection_id: collectionId })
         .eq('id', existing.id)
-    }
-    if (existingContent === content) {
+    if (ec === content) {
       console.log(`  ✅ Poem: ${title} (already exists)`)
-      return true
+      return { id: existing.id }
     }
     const line = firstLine(content)
     const disambiguated = line ? `${title} (${line})` : `${title} (variante)`
@@ -218,9 +241,9 @@ async function insertPoem(
       .maybeSingle()
     if (existsWithNew) {
       console.log(`  ✅ Poem: ${disambiguated} (already exists)`)
-      return true
+      return { id: existsWithNew.id }
     }
-    const { error } = await supabase
+    const { data: ins, error } = await supabase
       .from('poems')
       .insert({
         title: disambiguated,
@@ -229,6 +252,8 @@ async function insertPoem(
         author_id: authorId,
         collection_id: collectionId ?? null,
       })
+      .select('id')
+      .single()
     if (error) {
       console.error(
         `  ❌ Failed to insert poem "${disambiguated}": ${error.message}`,
@@ -236,9 +261,9 @@ async function insertPoem(
       return false
     }
     console.log(`  ✅ Poem: ${disambiguated}`)
-    return true
+    return { id: ins.id }
   }
-  const { error } = await supabase
+  const { data: ins, error } = await supabase
     .from('poems')
     .insert({
       title,
@@ -247,24 +272,33 @@ async function insertPoem(
       author_id: authorId,
       collection_id: collectionId ?? null,
     })
+    .select('id')
+    .single()
   if (error) {
     console.error(`  ❌ Failed to insert poem "${title}": ${error.message}`)
     return false
   }
   console.log(`  ✅ Poem: ${title}`)
-  return true
+  return { id: ins.id }
 }
 
-// ── Seed from JSON (supports both scraper single-object and sample array format) ──
+// ── Seed from JSON ────────────────────────────────────────────────────
 
 async function seedFromJSON(filePath: string, cliAuthor?: string) {
   const fs = await import('fs')
   const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8'))
-
-  // Determine if this is an array (sample format) or single object (scraper format)
   const entries: SampleEntry[] = Array.isArray(raw)
     ? raw
     : [raw as ScraperOutput]
+
+  // Collect all unique tags across all entries first
+  const allTags = [
+    ...new Set(entries.flatMap((e) => e.poems.flatMap((p) => p.tags ?? []))),
+  ]
+  const tagMap: Record<string, string | null> = {}
+  for (const tagName of allTags) {
+    tagMap[tagName] = await ensureTag(tagName)
+  }
 
   for (const entry of entries) {
     const authorName = entry.author ?? cliAuthor
@@ -279,41 +313,37 @@ async function seedFromJSON(filePath: string, cliAuthor?: string) {
     )
     const authorId = await ensureAuthor(authorName)
     if (!authorId) continue
-
-    // Update author bio if provided
-    if (entry.author_bio) {
+    if (entry.author_bio)
       await updateAuthorBio(
         authorId,
         entry.author_bio,
         entry.author_birth_year ?? null,
         entry.author_death_year ?? null,
       )
-    }
 
-    // Create collections
     const collections = [
       ...new Set(
-        entry.poems
-          .map((p: ScraperPoem) => p.collection)
-          .filter(Boolean) as string[],
+        entry.poems.map((p) => p.collection).filter(Boolean) as string[],
       ),
     ]
     const collectionMap: Record<string, string | null> = {}
-    for (const collTitle of collections) {
-      collectionMap[collTitle] = await ensureCollection(collTitle, authorId)
-    }
+    for (const ct of collections)
+      collectionMap[ct] = await ensureCollection(ct, authorId)
 
-    // Insert poems
-    for (const poemData of entry.poems) {
-      await insertPoem(
-        poemData.title,
-        poemData.content,
-        poemData.language,
+    for (const p of entry.poems) {
+      const result = await insertPoem(
+        p.title,
+        p.content,
+        p.language,
         authorId,
-        poemData.collection
-          ? (collectionMap[poemData.collection] ?? null)
-          : null,
+        p.collection ? (collectionMap[p.collection] ?? null) : null,
       )
+      if (result && p.tags) {
+        for (const tagName of p.tags) {
+          const tagId = tagMap[tagName]
+          if (tagId) await linkPoemTag(result.id, tagId)
+        }
+      }
     }
   }
 }
@@ -323,10 +353,9 @@ async function seedFromJSON(filePath: string, cliAuthor?: string) {
 async function main() {
   const args = parseArgs(process.argv)
   if (args.reset) await resetDatabase()
-
   const files = args.from.length > 0 ? args.from : ['data/sample-poems.json']
   console.log('🌱 Seeding…\n')
-  for (const filePath of files) await seedFromJSON(filePath, args.author)
+  for (const f of files) await seedFromJSON(f, args.author)
   console.log('\n✨ Seeding complete!')
 }
 

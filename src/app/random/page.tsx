@@ -132,7 +132,7 @@ export default async function RandomPage({
               {poemAuthorName}
             </p>
           )}
-          <div className="mt-4 leading-relaxed whitespace-pre-line text-stone-700 dark:text-stone-300">
+          <div className="mt-4 leading-relaxed whitespace-pre-wrap text-stone-700 dark:text-stone-300">
             {poemContent}
           </div>
         </article>

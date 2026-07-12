@@ -90,10 +90,17 @@ src/
 └── types/database.ts     Schema types
 scripts/
 ├── seed.ts               Poem seeder (reads JSON files from data/)
-└── scrape-wikisource.ts   Wikisource scraper
+├── scrape-wikisource.ts   Wikisource scraper
+└── convert-latex-sonnets.js  LaTeX sonnet converter
 data/
 ├── sample-poems.json      Curated sample poems (Baudelaire, Rimbaud, Verlaine)
-└── baudelaire.json        Scraped poems from Wikisource
+├── baudelaire.json        Scraped poems from Wikisource
+├── banville-sonnets.json  53 sonnets by Théodore de Banville
+├── gautier-sonnets.json   52 sonnets by Théophile Gautier
+├── heredia-sonnets.json   140 sonnets by José-Maria de Heredia
+├── lecontedelisle-sonnets.json  27 sonnets by Leconte de Lisle
+├── mendes-sonnets.json    39 sonnets by Catulle Mendès
+└── prudhomme-sonnets.json 160 sonnets by Sully Prudhomme
 supabase/
 └── migrations/           Schema + RLS policies
 ```

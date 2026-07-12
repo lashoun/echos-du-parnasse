@@ -75,7 +75,7 @@ export default function PoemCard({ poem, variant = 'list' }: PoemCardProps) {
           </div>
           <StatusIcons poemId={poem.id} />
         </div>
-        <p className="mt-4 leading-relaxed whitespace-pre-line text-stone-700 dark:text-stone-300">
+        <p className="mt-4 leading-relaxed whitespace-pre-wrap text-stone-700 dark:text-stone-300">
           {truncate(poem.content, 400)}
         </p>
         <Link
