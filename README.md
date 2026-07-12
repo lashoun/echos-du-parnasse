@@ -107,21 +107,22 @@ supabase/
 
 ## Routes
 
-| Path                    | Description                                                      |
-| ----------------------- | ---------------------------------------------------------------- |
-| `/`                     | Homepage — daily featured poem (deterministic random), nav links |
-| `/poems`                | Browse all poems + tag cloud                                     |
-| `/poems/[id]`           | Poem detail + prev/next nav                                      |
-| `/random`               | Random poem with filter form                                     |
-| `/collections`          | Collection listing                                               |
-| `/collections/[id]`     | Collection detail with ordered poems                             |
-| `/tags/[id]`            | Poems by tag                                                     |
-| `/authors/[id]`         | Author detail + their poems/collections                          |
-| `/search`               | Search by title or content                                       |
-| `/login`                | Email/password login & signup                                    |
-| `/auth/callback`        | OAuth code exchange handler                                      |
-| `/auth/signout`         | POST signout handler                                             |
-| `/auth/auth-code-error` | OAuth error display                                              |
+| Path                    | Description                                     |
+| ----------------------- | ----------------------------------------------- |
+| `/`                     | Homepage — daily featured poem, nav links       |
+| `/poems`                | Browse, search & filter all poems + random poem |
+| `/poems/[id]`           | Poem detail + prev/next nav                     |
+| `/collections`          | Collection listing                              |
+| `/collections/[id]`     | Collection detail with ordered poems            |
+| `/tags/[id]`            | Poems by tag                                    |
+| `/authors/[id]`         | Author detail + their poems/collections         |
+| `/about`                | Project info, features, sources, contact        |
+| `/privacy`              | Privacy policy (email, localStorage, cookies)   |
+| `/legal`                | Mentions légales (editor, hosting, license)     |
+| `/login`                | Email/password login & signup                   |
+| `/auth/callback`        | OAuth code exchange handler                     |
+| `/auth/signout`         | POST signout handler                            |
+| `/auth/auth-code-error` | OAuth error display                             |
 
 ## Data Model
 
@@ -140,8 +141,10 @@ Library tables have public read access. User data is owner-only via RLS.
 
 | Variable              | Required for | Used by           |
 | --------------------- | ------------ | ----------------- |
-| `SUPABASE_URL`        | Seed         | `scripts/seed.ts` |
-| `SUPABASE_SECRET_KEY` | Seed         | `scripts/seed.ts` |
+| `SUPABASE_URL`        | Seed only    | `scripts/seed.ts` |
+| `SUPABASE_SECRET_KEY` | Seed only    | `scripts/seed.ts` |
+| `SITE_URL`            | Production   | Auth redirects    |
+| `GITHUB_USERNAME`     | /about page  | GitHub links      |
 
 ## Design Principles
 
