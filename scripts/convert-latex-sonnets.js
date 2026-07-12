@@ -54,6 +54,11 @@ function normaliseLatex(text) {
   text = text.replace(/[ \t]{2,}/g, ' ')
   // Convert \vin (LaTeX verse indent) to tab — escape backslash properly
   text = text.replace(new RegExp('\\\\vin', 'g'), '\t')
+  // French typography: non-breaking space before : ; ! ?
+  // LaTeX does this automatically, so .tex files often have "word!" with no space.
+  // Normalize: strip any existing space/NBSP before punctuation, then add the correct one.
+  text = text.replace(/(\S)[ \u00A0\u202F]*([!?;])/g, '$1\u202F$2')
+  text = text.replace(/(\S)[ \u00A0\u202F]*(:)/g, '$1\u00A0$2')
   return text.trim()
 }
 
