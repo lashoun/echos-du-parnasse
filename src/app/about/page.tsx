@@ -21,17 +21,27 @@ export default function AboutPage() {
         <p>
           <strong>Échos du Parnasse</strong> est une bibliothèque numérique
           dédiée à la poésie du domaine public. Elle rassemble des œuvres
-          poétiques françaises du XIX<sup>e</sup> siècle, librement accessibles
-          à toutes et tous.
+          poétiques françaises librement accessibles à toutes et tous.
         </p>
 
         <p>
-          Le projet s&apos;inscrit dans la tradition du{' '}
-          <strong>Parnasse</strong>, mouvement poétique de la seconde moitié du
-          XIX<sup>e</sup> siècle qui prônait «&nbsp;l&apos;art pour
-          l&apos;art&nbsp;» et le culte de la beauté formelle. En écho à cet
-          idéal, le site met en valeur la richesse et la diversité de la poésie
-          parnassienne et romantique.
+          Le nom du projet fait réference au{' '}
+          <a
+            href="https://fr.wikipedia.org/wiki/Mont_Parnasse"
+            className="underline underline-offset-2 hover:text-stone-800 dark:hover:text-stone-200"
+          >
+            mont Parnasse
+          </a>
+          , qui était célébré dans la Grèce antique, avec le mont Hélicon, comme
+          l'une des deux retraites des neuf Muses. Il donna par ailleurs son nom
+          à un mouvement littéraire français du XIXe siècle&nbsp;: le{' '}
+          <a
+            href="https://fr.wikipedia.org/wiki/Parnasse_(po%C3%A9sie)"
+            className="underline underline-offset-2 hover:text-stone-800 dark:hover:text-stone-200"
+          >
+            Parnasse
+          </a>
+          .
         </p>
 
         <h2 className="text-lg font-semibold text-stone-800 dark:text-stone-200">
@@ -58,9 +68,14 @@ export default function AboutPage() {
           >
             Wikisource
           </a>{' '}
-          (bibliothèque libre de textes du domaine public) et de fichiers LaTeX
-          compilés à partir d&apos;éditions académiques. Le code source du site
-          est publié sous licence libre{' '}
+          et de{' '}
+          <a
+            href="https://gallica.bnf.fr/"
+            className="underline underline-offset-2 hover:text-stone-800 dark:hover:text-stone-200"
+          >
+            Gallica
+          </a>
+          . Le code source du site est publié sous licence libre{' '}
           <a
             href="https://www.gnu.org/licenses/gpl-3.0.html"
             className="underline underline-offset-2 hover:text-stone-800 dark:hover:text-stone-200"
