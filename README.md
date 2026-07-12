@@ -84,8 +84,7 @@ src/
 │   │   ├── env.ts        Lazy env-var guard
 │   │   ├── server.ts     Server client (RSC, route handlers)
 │   │   └── client.ts     Browser client (client components)
-│   ├── use-poem-status.ts  Auth-aware read/favorite hook (Supabase + localStorage)
-│   ├── merge-status.tsx    Login sync component
+│   ├── use-poem-status.ts  Disjoint read/favorite hook (Supabase when logged in, localStorage when not)
 │   └── utils.ts          Shared helpers
 ├── proxy.ts              Supabase auth session refresh
 └── types/database.ts     Schema types
