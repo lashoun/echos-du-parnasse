@@ -62,15 +62,16 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Scripts
 
-| Script       | Description                         |
-| ------------ | ----------------------------------- |
-| `pnpm dev`   | Start the dev server                |
-| `pnpm build` | Production build (also type-checks) |
-| `pnpm start` | Run the production build            |
-| `pnpm lint`  | Run ESLint                          |
-| `pnpm format`| Format source files with Prettier   |
-| `pnpm format:check`| Check formatting without writing|
-| `pnpm seed`  | Seed database with curated poems    |
+| Script              | Description                                                            |
+| ------------------- | ---------------------------------------------------------------------- |
+| `pnpm dev`          | Start the dev server                                                   |
+| `pnpm build`        | Production build (also type-checks)                                    |
+| `pnpm start`        | Run the production build                                               |
+| `pnpm lint`         | Run ESLint                                                             |
+| `pnpm format`       | Format source files with Prettier                                      |
+| `pnpm format:check` | Check formatting without writing                                       |
+| `pnpm seed`         | Seed poems from `data/` JSON files (default: `data/sample-poems.json`) |
+| `pnpm scrape`       | Scrape poems from French Wikisource                                    |
 
 ## Project structure
 
@@ -88,25 +89,32 @@ src/
 ├── proxy.ts              Supabase auth session refresh
 └── types/database.ts     Schema types
 scripts/
-└── seed.ts               Curated poem seeder
+├── seed.ts               Poem seeder (reads JSON files from data/)
+└── scrape-wikisource.ts   Wikisource scraper
+data/
+├── sample-poems.json      Curated sample poems (Baudelaire, Rimbaud, Verlaine)
+└── baudelaire.json        Scraped poems from Wikisource
 supabase/
 └── migrations/           Schema + RLS policies
 ```
 
 ## Routes
 
-| Path | Description |
-|------|-------------|
-| `/` | Homepage — featured poem, nav links |
-| `/poems` | Browse all poems + tag cloud |
-| `/poems/[id]` | Poem detail + prev/next nav |
-| `/random` | Random poem with filter form |
-| `/collections` | Collection listing |
-| `/collections/[id]` | Collection detail with ordered poems |
-| `/tags/[id]` | Poems by tag |
-| `/authors/[id]` | Author detail + their poems/collections |
-| `/search` | Search by title or content |
-| `/login` | Email/password login & signup |
+| Path                    | Description                                                      |
+| ----------------------- | ---------------------------------------------------------------- |
+| `/`                     | Homepage — daily featured poem (deterministic random), nav links |
+| `/poems`                | Browse all poems + tag cloud                                     |
+| `/poems/[id]`           | Poem detail + prev/next nav                                      |
+| `/random`               | Random poem with filter form                                     |
+| `/collections`          | Collection listing                                               |
+| `/collections/[id]`     | Collection detail with ordered poems                             |
+| `/tags/[id]`            | Poems by tag                                                     |
+| `/authors/[id]`         | Author detail + their poems/collections                          |
+| `/search`               | Search by title or content                                       |
+| `/login`                | Email/password login & signup                                    |
+| `/auth/callback`        | OAuth code exchange handler                                      |
+| `/auth/signout`         | POST signout handler                                             |
+| `/auth/auth-code-error` | OAuth error display                                              |
 
 ## Data Model
 
@@ -123,17 +131,21 @@ Library tables have public read access. User data is owner-only via RLS.
 
 ### Seed script env vars
 
-| Variable | Required for | Used by |
-|----------|-------------|---------|
-| `SUPABASE_URL` | Seed | `scripts/seed.ts` |
-| `SUPABASE_SECRET_KEY` | Seed | `scripts/seed.ts` |
+| Variable              | Required for | Used by           |
+| --------------------- | ------------ | ----------------- |
+| `SUPABASE_URL`        | Seed         | `scripts/seed.ts` |
+| `SUPABASE_SECRET_KEY` | Seed         | `scripts/seed.ts` |
 
 ## Design Principles
 
 - Minimal, typography-focused UI
 - Accessible (WCAG AA) — aspirational
 - Offline-capable (PWA goal)
-- Open source, contributor-friendly
+- Free software, contributor-friendly
+
+## License
+
+GNU General Public License v3.0. See [LICENSE](./LICENSE).
 
 ## Known Issues / TODO
 
@@ -141,4 +153,3 @@ Library tables have public read access. User data is owner-only via RLS.
 - No author listing page (only detail page via `/authors/[id]`)
 - No test suite
 - Dark mode uses `prefers-color-scheme` media query (no manual toggle)
-

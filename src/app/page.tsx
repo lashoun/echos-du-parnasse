@@ -7,11 +7,37 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 export default async function HomePage() {
   const supabase = await createSupabaseServerClient()
 
-  // Fetch the first poem
+  // Get total poem count for daily random selection
+  const { count } = await supabase
+    .from('poems')
+    .select('*', { count: 'exact', head: true })
+
+  if (!count || count === 0) {
+    return (
+      <PageShell>
+        <StateMessage
+          title="Bienvenue sur Échos du Parnasse"
+          description="Aucun poème pour le moment. Revenez bientôt !"
+        />
+      </PageShell>
+    )
+  }
+
+  // Deterministic daily selection: hash today's date to pick a poem index
+  const dateStr = new Date().toISOString().slice(0, 10) // "2026-07-06"
+  let hash = 0
+  for (let i = 0; i < dateStr.length; i++) {
+    hash = ((hash << 5) - hash) + dateStr.charCodeAt(i)
+    hash |= 0
+  }
+  const index = Math.abs(hash) % count
+
+  // Fetch the featured poem
   const { data: poems } = await supabase
     .from('poems')
     .select('id, title, content, author_id')
-    .limit(1)
+    .order('id')
+    .range(index, index)
 
   const poem = poems?.[0] ?? null
   let authorName: string | null = null

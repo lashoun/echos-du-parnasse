@@ -1,0 +1,71 @@
+[
+  {
+    "author": "Charles Baudelaire",
+    "author_bio": "Poète français, figure majeure du symbolisme et auteur des Fleurs du mal.",
+    "author_birth_year": 1821,
+    "author_death_year": 1867,
+    "poems": [
+      {
+        "title": "L'Albatros",
+        "content": "Souvent, pour s'amuser, les hommes d'équipage\nPrennent des albatros, vastes oiseaux des mers,\nQui suivent, indolents compagnons de voyage,\nLe navire glissant sur les gouffres amers.\n\nÀ peine les ont-ils déposés sur les planches,\nQue ces rois de l'azur, maladroits et honteux,\nLaissent piteusement leurs grandes ailes blanches\nComme des avirons traîner à côté d'eux.\n\nCe voyageur ailé, comme il est gauche et veule !\nLui, naguère si beau, qu'il est comique et laid !\nL'un agace son bec avec un brûle-gueule,\nL'autre mime, en boitant, l'infirme qui volait !\n\nLe Poète est semblable au prince des nuées\nQui hante la tempête et se rit de l'archer ;\nExilé sur le sol au milieu des huées,\nSes ailes de géant l'empêchent de marcher.",
+        "language": "fr"
+      },
+      {
+        "title": "Correspondances",
+        "content": "La Nature est un temple où de vivants piliers\nLaissent parfois sortir de confuses paroles ;\nL'homme y passe à travers des forêts de symboles\nQui l'observent avec des regards familiers.\n\nComme de longs échos qui de loin se confondent\nDans une ténébreuse et profonde unité,\nVaste comme la nuit et comme la clarté,\nLes parfums, les couleurs et les sons se répondent.\n\nIl est des parfums frais comme des chairs d'enfants,\nDoux comme les hautbois, verts comme les prairies,\n— Et d'autres, corrompus, riches et triomphants,\n\nAyant l'expansion des choses infinies,\nComme l'ambre, le musc, le benjoin et l'encens,\nQui chantent les transports de l'esprit et des sens.",
+        "language": "fr"
+      },
+      {
+        "title": "Recueillement",
+        "content": "Sois sage, ô ma Douleur, et tiens-toi plus tranquille.\nTu réclamais le Soir ; il descend ; le voici :\nUne atmosphère obscure enveloppe la ville,\nAux uns portant la paix, aux autres le souci.\n\nPendant que des mortels la multitude vile,\nSous le fouet du Plaisir, ce bourreau sans merci,\nVa cueillir des remords dans la fête servile,\nMa Douleur, donne-moi la main ; viens par ici,\n\nLoin d'eux. Vois se pencher les défuntes Années,\nSur les balcons du ciel, en robes surannées ;\nSurgir du fond des eaux le Regret souriant ;\n\nLe Soleil moribond s'endormir sous une arche,\nEt, comme un long linceul traînant à l'Orient,\nEntends, ma chère, entends la douce Nuit qui marche.",
+        "language": "fr"
+      }
+    ]
+  },
+  {
+    "author": "Arthur Rimbaud",
+    "author_bio": "Poète français, précurseur du surréalisme, auteur d'Une saison en enfer et des Illuminations.",
+    "author_birth_year": 1854,
+    "author_death_year": 1891,
+    "poems": [
+      {
+        "title": "Le Dormeur du val",
+        "content": "C'est un trou de verdure où chante une rivière\nAccrochant follement aux herbes des haillons\nD'argent ; où le soleil, de la montagne fière,\nLuit : c'est un petit val qui mousse de rayons.\n\nUn soldat jeune, bouche ouverte, tête nue,\nEt la nuque baignant dans le frais cresson bleu,\nDort ; il est étendu dans l'herbe, sous la nue,\nPâle dans son lit vert où la lumière pleut.\n\nLes pieds dans les glaïeuls, il dort. Souriant comme\nSourirait un enfant malade, il fait un somme :\nNature, berce-le chaudement : il a froid.\n\nLes parfums ne font pas frissonner sa narine ;\nIl dort dans le soleil, la main sur sa poitrine\nTranquille. Il a deux trous rouges au côté droit.",
+        "language": "fr"
+      },
+      {
+        "title": "Voyelles",
+        "content": "A noir, E blanc, I rouge, U vert, O bleu : voyelles,\nJe dirai quelque jour vos naissances latentes :\nA, noir corset velu des mouches éclatantes\nQui bombinent autour des puanteurs cruelles,\n\nGolfes d'ombre ; E, candeurs des vapeurs et des tentes,\nLances des glaciers fiers, rois blancs, frissons d'ombrelles ;\nI, pourpres, sang craché, rire des lèvres belles\nDans la colère ou les ivresses pénitentes ;\n\nU, cycles, vibrements divins des mers virides,\nPaix des pâtis semés d'animaux, paix des rides\nQue l'alchimie imprime aux grands fronts studieux ;\n\nO, suprême Clairon plein des strideurs étranges,\nSilences traversés des Mondes et des Anges :\n— O l'Oméga, rayon violet de Ses Yeux !",
+        "language": "fr"
+      },
+      {
+        "title": "Ma Bohème",
+        "content": "Je m'en allais, les poings dans mes poches crevées ;\nMon paletot aussi devenait idéal ;\nJ'allais sous le ciel, Muse ! et j'étais ton féal ;\nOh ! là là ! que d'amours splendides j'ai rêvées !\n\nMon unique culotte avait un large trou.\n— Petit-Poucet rêveur, j'égrenais dans ma course\nDes rimes. Mon auberge était à la Grande-Ourse.\n— Mes étoiles au ciel avaient un doux frou-frou.\n\nEt je les écoutais, assis au bord des routes,\nCes bons soirs de septembre où je sentais des gouttes\nDe rosée à mon front, comme un vin de vigueur ;\n\nOù, rimant au milieu des ombres fantastiques,\nComme des lyres, je tirais les élastiques\nDe mes souliers blessés, un pied près de mon cœur !",
+        "language": "fr"
+      }
+    ]
+  },
+  {
+    "author": "Paul Verlaine",
+    "author_bio": "Poète français, figure du symbolisme et du décadentisme.",
+    "author_birth_year": 1844,
+    "author_death_year": 1896,
+    "poems": [
+      {
+        "title": "Chanson d'automne",
+        "content": "Les sanglots longs\nDes violons\nDe l'automne\nBlessent mon cœur\nD'une langueur\nMonotone.\n\nTout suffocant\nEt blême, quand\nSonne l'heure,\nJe me souviens\nDes jours anciens\nEt je pleure ;\n\nEt je m'en vais\nAu vent mauvais\nQui m'emporte\nDeçà, delà,\nPareil à la\nFeuille morte.",
+        "language": "fr"
+      },
+      {
+        "title": "Il pleure dans mon cœur",
+        "content": "Il pleure dans mon cœur\nComme il pleut sur la ville ;\nQuelle est cette langueur\nQui pénètre mon cœur ?\n\nÔ bruit doux de la pluie\nPar terre et sur les toits !\nPour un cœur qui s'ennuie,\nÔ le chant de la pluie !\n\nIl pleure sans raison\nDans ce cœur qui s'écœure.\nQuoi ! nulle trahison ?…\nCe deuil est sans raison.\n\nC'est bien la pire peine\nDe ne savoir pourquoi\nSans amour et sans haine\nMon cœur a tant de peine !",
+        "language": "fr"
+      },
+      {
+        "title": "Mon rêve familier",
+        "content": "Je fais souvent ce rêve étrange et pénétrant\nD'une femme inconnue, et que j'aime, et qui m'aime,\nEt qui n'est, chaque fois, ni tout à fait la même\nNi tout à fait une autre, et m'aime et me comprend.\n\nCar elle me comprend, et mon cœur, transparent\nPour elle seule, hélas ! cesse d'être un problème\nPour elle seule, et les moiteurs de mon front blême,\nElle seule les sait rafraîchir, en pleurant.\n\nEst-elle brune, blonde ou rousse ? — Je l'ignore.\nSon nom ? Je me souviens qu'il est doux et sonore\nComme ceux des aimés que la Vie exila.\n\nSon regard est pareil au regard des statues,\nEt pour sa voix, lointaine, et calme, et grave, elle a\nL'inflexion des voix chères qui se sont tues.",
+        "language": "fr"
+      }
+    ]
+  }
+]

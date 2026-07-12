@@ -5,20 +5,17 @@
  * Uses the secret key for admin access.
  *
  * Usage:
- *   SUPABASE_URL=... SUPABASE_SECRET_KEY=... pnpm seed
+ *   pnpm seed                              # seed data/sample-poems.json
+ *   pnpm seed --from baudelaire.json       # seed from scraper output
+ *   pnpm seed --from baudelaire.json --author "Name"  # force author
+ *   pnpm seed --reset --from sample.json   # reset + seed
  *
- * Or with a .env.local file:
- *   pnpm dotenv -- pnpm seed
- *
- * Environment variables:
- *   SUPABASE_URL       – Supabase project URL
- *   SUPABASE_SECRET_KEY – Secret key (bypasses RLS, sb_secret_...)
+ * Requires SUPABASE_URL and SUPABASE_SECRET_KEY in .env.local.
  */
 
 import dotenv from 'dotenv'
 import { createClient } from '@supabase/supabase-js'
 
-// Load .env.local (same file Next.js uses)
 dotenv.config({ path: '.env.local' })
 
 // ── Config ────────────────────────────────────────────────────────────
@@ -34,324 +31,306 @@ if (!supabaseUrl || !secretKey) {
 
 const supabase = createClient(supabaseUrl, secretKey)
 
-// ── Curated data ──────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────
 
-interface SeedAuthor {
-  name: string
-  birth_year: number | null
-  death_year: number | null
-  bio: string | null
-}
-
-interface SeedPoem {
+interface ScraperPoem {
   title: string
   content: string
   language: string
+  collection?: string | null
+  source_url?: string
 }
 
-const authors: SeedAuthor[] = [
-  {
-    name: 'Charles Baudelaire',
-    birth_year: 1821,
-    death_year: 1867,
-    bio: 'Poète français, figure majeure du symbolisme et auteur des Fleurs du mal.',
-  },
-  {
-    name: 'Arthur Rimbaud',
-    birth_year: 1854,
-    death_year: 1891,
-    bio: "Poète français, précurseur du surréalisme, auteur d'Une saison en enfer et des Illuminations.",
-  },
-  {
-    name: 'Paul Verlaine',
-    birth_year: 1844,
-    death_year: 1896,
-    bio: 'Poète français, figure du symbolisme et du décadentisme.',
-  },
-]
-
-const poemsByAuthor: Record<string, SeedPoem[]> = {
-  'Charles Baudelaire': [
-    {
-      title: "L'Albatros",
-      language: 'fr',
-      content: `Souvent, pour s'amuser, les hommes d'équipage
-Prennent des albatros, vastes oiseaux des mers,
-Qui suivent, indolents compagnons de voyage,
-Le navire glissant sur les gouffres amers.
-
-À peine les ont-ils déposés sur les planches,
-Que ces rois de l'azur, maladroits et honteux,
-Laissent piteusement leurs grandes ailes blanches
-Comme des avirons traîner à côté d'eux.
-
-Ce voyageur ailé, comme il est gauche et veule !
-Lui, naguère si beau, qu'il est comique et laid !
-L'un agace son bec avec un brûle-gueule,
-L'autre mime, en boitant, l'infirme qui volait !
-
-Le Poète est semblable au prince des nuées
-Qui hante la tempête et se rit de l'archer ;
-Exilé sur le sol au milieu des huées,
-Ses ailes de géant l'empêchent de marcher.`,
-    },
-    {
-      title: 'Correspondances',
-      language: 'fr',
-      content: `La Nature est un temple où de vivants piliers
-Laissent parfois sortir de confuses paroles ;
-L'homme y passe à travers des forêts de symboles
-Qui l'observent avec des regards familiers.
-
-Comme de longs échos qui de loin se confondent
-Dans une ténébreuse et profonde unité,
-Vaste comme la nuit et comme la clarté,
-Les parfums, les couleurs et les sons se répondent.
-
-Il est des parfums frais comme des chairs d'enfants,
-Doux comme les hautbois, verts comme les prairies,
-— Et d'autres, corrompus, riches et triomphants,
-
-Ayant l'expansion des choses infinies,
-Comme l'ambre, le musc, le benjoin et l'encens,
-Qui chantent les transports de l'esprit et des sens.`,
-    },
-    {
-      title: 'Recueillement',
-      language: 'fr',
-      content: `Sois sage, ô ma Douleur, et tiens-toi plus tranquille.
-Tu réclamais le Soir ; il descend ; le voici :
-Une atmosphère obscure enveloppe la ville,
-Aux uns portant la paix, aux autres le souci.
-
-Pendant que des mortels la multitude vile,
-Sous le fouet du Plaisir, ce bourreau sans merci,
-Va cueillir des remords dans la fête servile,
-Ma Douleur, donne-moi la main ; viens par ici,
-
-Loin d'eux. Vois se pencher les défuntes Années,
-Sur les balcons du ciel, en robes surannées ;
-Surgir du fond des eaux le Regret souriant ;
-
-Le Soleil moribond s'endormir sous une arche,
-Et, comme un long linceul traînant à l'Orient,
-Entends, ma chère, entends la douce Nuit qui marche.`,
-    },
-  ],
-  'Arthur Rimbaud': [
-    {
-      title: 'Le Dormeur du val',
-      language: 'fr',
-      content: `C'est un trou de verdure où chante une rivière
-Accrochant follement aux herbes des haillons
-D'argent ; où le soleil, de la montagne fière,
-Luit : c'est un petit val qui mousse de rayons.
-
-Un soldat jeune, bouche ouverte, tête nue,
-Et la nuque baignant dans le frais cresson bleu,
-Dort ; il est étendu dans l'herbe, sous la nue,
-Pâle dans son lit vert où la lumière pleut.
-
-Les pieds dans les glaïeuls, il dort. Souriant comme
-Sourirait un enfant malade, il fait un somme :
-Nature, berce-le chaudement : il a froid.
-
-Les parfums ne font pas frissonner sa narine ;
-Il dort dans le soleil, la main sur sa poitrine
-Tranquille. Il a deux trous rouges au côté droit.`,
-    },
-    {
-      title: 'Voyelles',
-      language: 'fr',
-      content: `A noir, E blanc, I rouge, U vert, O bleu : voyelles,
-Je dirai quelque jour vos naissances latentes :
-A, noir corset velu des mouches éclatantes
-Qui bombinent autour des puanteurs cruelles,
-
-Golfes d'ombre ; E, candeurs des vapeurs et des tentes,
-Lances des glaciers fiers, rois blancs, frissons d'ombrelles ;
-I, pourpres, sang craché, rire des lèvres belles
-Dans la colère ou les ivresses pénitentes ;
-
-U, cycles, vibrements divins des mers virides,
-Paix des pâtis semés d'animaux, paix des rides
-Que l'alchimie imprime aux grands fronts studieux ;
-
-O, suprême Clairon plein des strideurs étranges,
-Silences traversés des Mondes et des Anges :
-— O l'Oméga, rayon violet de Ses Yeux !`,
-    },
-    {
-      title: 'Ma Bohème',
-      language: 'fr',
-      content: `Je m'en allais, les poings dans mes poches crevées ;
-Mon paletot aussi devenait idéal ;
-J'allais sous le ciel, Muse ! et j'étais ton féal ;
-Oh ! là là ! que d'amours splendides j'ai rêvées !
-
-Mon unique culotte avait un large trou.
-— Petit-Poucet rêveur, j'égrenais dans ma course
-Des rimes. Mon auberge était à la Grande-Ourse.
-— Mes étoiles au ciel avaient un doux frou-frou.
-
-Et je les écoutais, assis au bord des routes,
-Ces bons soirs de septembre où je sentais des gouttes
-De rosée à mon front, comme un vin de vigueur ;
-
-Où, rimant au milieu des ombres fantastiques,
-Comme des lyres, je tirais les élastiques
-De mes souliers blessés, un pied près de mon cœur !`,
-    },
-  ],
-  'Paul Verlaine': [
-    {
-      title: "Chanson d'automne",
-      language: 'fr',
-      content: `Les sanglots longs
-Des violons
-De l'automne
-Blessent mon cœur
-D'une langueur
-Monotone.
-
-Tout suffocant
-Et blême, quand
-Sonne l'heure,
-Je me souviens
-Des jours anciens
-Et je pleure ;
-
-Et je m'en vais
-Au vent mauvais
-Qui m'emporte
-Deçà, delà,
-Pareil à la
-Feuille morte.`,
-    },
-    {
-      title: 'Il pleure dans mon cœur',
-      language: 'fr',
-      content: `Il pleure dans mon cœur
-Comme il pleut sur la ville ;
-Quelle est cette langueur
-Qui pénètre mon cœur ?
-
-Ô bruit doux de la pluie
-Par terre et sur les toits !
-Pour un cœur qui s'ennuie,
-Ô le chant de la pluie !
-
-Il pleure sans raison
-Dans ce cœur qui s'écœure.
-Quoi ! nulle trahison ?…
-Ce deuil est sans raison.
-
-C'est bien la pire peine
-De ne savoir pourquoi
-Sans amour et sans haine
-Mon cœur a tant de peine !`,
-    },
-    {
-      title: 'Mon rêve familier',
-      language: 'fr',
-      content: `Je fais souvent ce rêve étrange et pénétrant
-D'une femme inconnue, et que j'aime, et qui m'aime,
-Et qui n'est, chaque fois, ni tout à fait la même
-Ni tout à fait une autre, et m'aime et me comprend.
-
-Car elle me comprend, et mon cœur, transparent
-Pour elle seule, hélas ! cesse d'être un problème
-Pour elle seule, et les moiteurs de mon front blême,
-Elle seule les sait rafraîchir, en pleurant.
-
-Est-elle brune, blonde ou rousse ? — Je l'ignore.
-Son nom ? Je me souviens qu'il est doux et sonore
-Comme ceux des aimés que la Vie exila.
-
-Son regard est pareil au regard des statues,
-Et pour sa voix, lointaine, et calme, et grave, elle a
-L'inflexion des voix chères qui se sont tues.`,
-    },
-  ],
+interface ScraperOutput {
+  author?: string | null
+  author_bio?: string | null
+  author_birth_year?: number | null
+  author_death_year?: number | null
+  poems: ScraperPoem[]
+  errors?: { title: string; reason: string }[]
 }
 
-// ── Seed function ─────────────────────────────────────────────────────
+interface SampleEntry {
+  author: string
+  author_bio?: string | null
+  author_birth_year?: number | null
+  author_death_year?: number | null
+  poems: ScraperPoem[]
+}
 
-async function seed() {
-  console.log('🌱 Seeding Échos du Parnasse…\n')
+// ── CLI args ──────────────────────────────────────────────────────────
 
-  for (const authorData of authors) {
-    // Find existing author or insert
-    const { data: existing } = await supabase
-      .from('authors')
-      .select('id')
-      .eq('name', authorData.name)
-      .maybeSingle()
+interface CliArgs {
+  from: string[]
+  author?: string
+  reset?: boolean
+}
 
-    let authorId: string | null = existing?.id ?? null
-
-    if (!authorId) {
-      const { data: inserted, error: insertError } = await supabase
-        .from('authors')
-        .insert({
-          name: authorData.name,
-          birth_year: authorData.birth_year,
-          death_year: authorData.death_year,
-          bio: authorData.bio,
-        })
-        .select('id')
-        .single()
-
-      if (insertError) {
-        console.error(
-          `❌ Failed to insert author "${authorData.name}":`,
-          insertError.message,
-        )
-        continue
-      }
-      authorId = inserted.id
-    }
-
-    console.log(`✅ Author: ${authorData.name} (${authorId})`)
-
-    // Insert poems for this author
-    const poems = poemsByAuthor[authorData.name] ?? []
-    for (const poemData of poems) {
-      // Check if poem already exists (by title + author)
-      const { data: existingPoem } = await supabase
-        .from('poems')
-        .select('id')
-        .eq('title', poemData.title)
-        .eq('author_id', authorId)
-        .maybeSingle()
-
-      if (existingPoem) {
-        console.log(`  ✅ Poem: ${poemData.title} (already exists)`)
-        continue
-      }
-
-      const { error: poemError } = await supabase.from('poems').insert({
-        title: poemData.title,
-        content: poemData.content,
-        language: poemData.language,
-        author_id: authorId,
-      })
-
-      if (poemError) {
-        console.error(
-          `  ❌ Failed to insert poem "${poemData.title}":`,
-          poemError.message,
-        )
-      } else {
-        console.log(`  ✅ Poem: ${poemData.title}`)
-      }
+function parseArgs(argv: string[]): CliArgs {
+  const args: CliArgs = { from: [] }
+  for (let i = 2; i < argv.length; i++) {
+    switch (argv[i]) {
+      case '--from':
+        args.from.push(argv[++i])
+        break
+      case '--author':
+      case '-a':
+        args.author = argv[++i]
+        break
+      case '--reset':
+        args.reset = true
+        break
     }
   }
+  return args
+}
 
+// ── Database helpers ──────────────────────────────────────────────────
+
+async function resetDatabase() {
+  console.log('🗑️  Clearing database…')
+  await supabase
+    .from('poem_tags')
+    .delete()
+    .neq('poem_id', '00000000-0000-0000-0000-000000000000')
+  await supabase
+    .from('poems')
+    .delete()
+    .neq('id', '00000000-0000-0000-0000-000000000000')
+  await supabase
+    .from('collections')
+    .delete()
+    .neq('id', '00000000-0000-0000-0000-000000000000')
+  console.log('✅ Database cleared')
+}
+
+async function ensureAuthor(name: string): Promise<string | null> {
+  const { data: existing } = await supabase
+    .from('authors')
+    .select('id')
+    .eq('name', name)
+    .maybeSingle()
+  if (existing) return existing.id
+  const { data: inserted, error } = await supabase
+    .from('authors')
+    .insert({ name })
+    .select('id')
+    .single()
+  if (error) {
+    console.error(`  ❌ Failed to create author "${name}": ${error.message}`)
+    return null
+  }
+  console.log(`  ✅ Author created: ${name} (${inserted.id})`)
+  return inserted.id
+}
+
+async function updateAuthorBio(
+  authorId: string,
+  bio: string,
+  birthYear: number | null,
+  deathYear: number | null,
+) {
+  const { data: existing } = await supabase
+    .from('authors')
+    .select('bio')
+    .eq('id', authorId)
+    .single()
+  if (!existing?.bio) {
+    await supabase
+      .from('authors')
+      .update({ bio, birth_year: birthYear, death_year: deathYear })
+      .eq('id', authorId)
+  }
+}
+
+async function ensureCollection(
+  title: string,
+  authorId: string,
+): Promise<string | null> {
+  const { data: existing } = await supabase
+    .from('collections')
+    .select('id')
+    .eq('title', title)
+    .eq('author_id', authorId)
+    .maybeSingle()
+  if (existing) return existing.id
+  const { data: inserted, error } = await supabase
+    .from('collections')
+    .insert({ title, author_id: authorId })
+    .select('id')
+    .single()
+  if (error) {
+    console.error(
+      `  ❌ Failed to create collection "${title}": ${error.message}`,
+    )
+    return null
+  }
+  console.log(`  ✅ Collection created: ${title}`)
+  return inserted.id
+}
+
+function firstLine(text: string): string {
+  return (
+    text
+      .replace(/^[「""'']?\s*/, '')
+      .split('\n')
+      .map((l) => l.trim())
+      .find((l) => l.length > 10 && !/^[—–\-_]+$/.test(l))
+      ?.replace(/[「」""''…!?;:,.]$/, '')
+      ?.substring(0, 60)
+      ?.trim() ?? ''
+  )
+}
+
+async function insertPoem(
+  title: string,
+  content: string,
+  language: string,
+  authorId: string,
+  collectionId?: string | null,
+): Promise<boolean> {
+  const { data: existing } = await supabase
+    .from('poems')
+    .select('id, content, collection_id')
+    .eq('title', title)
+    .eq('author_id', authorId)
+    .maybeSingle()
+  if (existing) {
+    const existingContent = (existing as any).content ?? ''
+    const existingCollId = (existing as any).collection_id ?? null
+    if (collectionId && !existingCollId) {
+      await supabase
+        .from('poems')
+        .update({ collection_id: collectionId })
+        .eq('id', existing.id)
+    }
+    if (existingContent === content) {
+      console.log(`  ✅ Poem: ${title} (already exists)`)
+      return true
+    }
+    const line = firstLine(content)
+    const disambiguated = line ? `${title} (${line})` : `${title} (variante)`
+    const { data: existsWithNew } = await supabase
+      .from('poems')
+      .select('id')
+      .eq('title', disambiguated)
+      .eq('author_id', authorId)
+      .maybeSingle()
+    if (existsWithNew) {
+      console.log(`  ✅ Poem: ${disambiguated} (already exists)`)
+      return true
+    }
+    const { error } = await supabase
+      .from('poems')
+      .insert({
+        title: disambiguated,
+        content,
+        language,
+        author_id: authorId,
+        collection_id: collectionId ?? null,
+      })
+    if (error) {
+      console.error(
+        `  ❌ Failed to insert poem "${disambiguated}": ${error.message}`,
+      )
+      return false
+    }
+    console.log(`  ✅ Poem: ${disambiguated}`)
+    return true
+  }
+  const { error } = await supabase
+    .from('poems')
+    .insert({
+      title,
+      content,
+      language,
+      author_id: authorId,
+      collection_id: collectionId ?? null,
+    })
+  if (error) {
+    console.error(`  ❌ Failed to insert poem "${title}": ${error.message}`)
+    return false
+  }
+  console.log(`  ✅ Poem: ${title}`)
+  return true
+}
+
+// ── Seed from JSON (supports both scraper single-object and sample array format) ──
+
+async function seedFromJSON(filePath: string, cliAuthor?: string) {
+  const fs = await import('fs')
+  const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8'))
+
+  // Determine if this is an array (sample format) or single object (scraper format)
+  const entries: SampleEntry[] = Array.isArray(raw)
+    ? raw
+    : [raw as ScraperOutput]
+
+  for (const entry of entries) {
+    const authorName = entry.author ?? cliAuthor
+    if (!authorName) {
+      console.error(
+        `  ❌ No author in ${filePath}. Pass --author "Name" to specify.`,
+      )
+      continue
+    }
+    console.log(
+      `\n📄 ${filePath} — ${entry.poems.length} poem(s) for ${authorName}`,
+    )
+    const authorId = await ensureAuthor(authorName)
+    if (!authorId) continue
+
+    // Update author bio if provided
+    if (entry.author_bio) {
+      await updateAuthorBio(
+        authorId,
+        entry.author_bio,
+        entry.author_birth_year ?? null,
+        entry.author_death_year ?? null,
+      )
+    }
+
+    // Create collections
+    const collections = [
+      ...new Set(
+        entry.poems
+          .map((p: ScraperPoem) => p.collection)
+          .filter(Boolean) as string[],
+      ),
+    ]
+    const collectionMap: Record<string, string | null> = {}
+    for (const collTitle of collections) {
+      collectionMap[collTitle] = await ensureCollection(collTitle, authorId)
+    }
+
+    // Insert poems
+    for (const poemData of entry.poems) {
+      await insertPoem(
+        poemData.title,
+        poemData.content,
+        poemData.language,
+        authorId,
+        poemData.collection
+          ? (collectionMap[poemData.collection] ?? null)
+          : null,
+      )
+    }
+  }
+}
+
+// ── Main ──────────────────────────────────────────────────────────────
+
+async function main() {
+  const args = parseArgs(process.argv)
+  if (args.reset) await resetDatabase()
+
+  const files = args.from.length > 0 ? args.from : ['data/sample-poems.json']
+  console.log('🌱 Seeding…\n')
+  for (const filePath of files) await seedFromJSON(filePath, args.author)
   console.log('\n✨ Seeding complete!')
 }
 
-seed().catch((err) => {
+main().catch((err) => {
   console.error('Fatal error:', err)
   process.exit(1)
 })
