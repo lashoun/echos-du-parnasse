@@ -62,16 +62,16 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Scripts
 
-| Script              | Description                                                            |
-| ------------------- | ---------------------------------------------------------------------- |
-| `pnpm dev`          | Start the dev server                                                   |
-| `pnpm build`        | Production build (also type-checks)                                    |
-| `pnpm start`        | Run the production build                                               |
-| `pnpm lint`         | Run ESLint                                                             |
-| `pnpm format`       | Format source files with Prettier                                      |
-| `pnpm format:check` | Check formatting without writing                                       |
-| `pnpm seed`         | Seed poems from `data/` JSON files (default: `data/sample-poems.json`) |
-| `pnpm scrape`       | Scrape poems from French Wikisource                                    |
+| Script              | Description                                                                         |
+| ------------------- | ----------------------------------------------------------------------------------- |
+| `pnpm dev`          | Start the dev server                                                                |
+| `pnpm build`        | Production build (also type-checks)                                                 |
+| `pnpm start`        | Run the production build                                                            |
+| `pnpm lint`         | Run ESLint                                                                          |
+| `pnpm format`       | Format source files with Prettier                                                   |
+| `pnpm format:check` | Check formatting without writing                                                    |
+| `pnpm seed`         | Seed poems from `data/` JSON files (requires `--from path`, supports glob patterns) |
+| `pnpm scrape`       | Scrape poems from French Wikisource                                                 |
 
 ## Project structure
 

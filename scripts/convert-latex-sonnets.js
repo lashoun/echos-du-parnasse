@@ -34,6 +34,9 @@ function normaliseLatex(text) {
   text = text.replace(/(^|[^\\])%.*/gm, '$1')
   text = text.replace(/\\&/g, '&')
   for (const [cmd, char] of ACCENT_ENTRIES) text = text.replaceAll(cmd, char)
+  // Dashes: --- → em-dash, -- → en-dash
+  text = text.replace(/---/g, '—')
+  text = text.replace(/--/g, '–')
   text = text.split('\n').map(l => l.trim()).join('\n')
   text = text.replace(/\\\\![ \t]*\n?/g, '\n\n')
   text = text.replace(/\\\\[ \t]*\n?/g, '\n')
@@ -117,7 +120,7 @@ function parseSonnets(latex) {
       baseTitle = title
     } else {
       baseTitle = title
-      if (/^[IVXLCDM]+$/.test(title) && sub) title = `${title} – ${sub}`
+      if (/^[IVXLCDM]+$/.test(title) && sub) title = `${title} — ${sub}`
       else if (sub) title = `${title} (${sub})`
     }
 

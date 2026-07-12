@@ -11,15 +11,15 @@ Digital library for public-domain poetry (French-first). Next.js 16 + Supabase.
 
 ## Commands
 
-| Command       | Action                                                                                            |
-| ------------- | ------------------------------------------------------------------------------------------------- |
-| `pnpm dev`    | Start dev server (port 3000)                                                                      |
-| `pnpm build`  | Type-check + production build                                                                     |
-| `pnpm start`  | Run production build                                                                              |
-| `pnpm lint`   | ESLint (flat config, next/core-web-vitals + typescript + prettier)                                |
-| `pnpm format` | Prettier (semi:false, singleQuote:true, tailwindcss plugin)                                       |
-| `pnpm seed`   | Seed database via `scripts/seed.ts`. Defaults to `data/sample-poems.json`. Use `--from file.json` |
-| `pnpm scrape` | Scrape poems from French Wikisource (author/collection/config modes)                              |
+| Command       | Action                                                                                     |
+| ------------- | ------------------------------------------------------------------------------------------ |
+| `pnpm dev`    | Start dev server (port 3000)                                                               |
+| `pnpm build`  | Type-check + production build                                                              |
+| `pnpm start`  | Run production build                                                                       |
+| `pnpm lint`   | ESLint (flat config, next/core-web-vitals + typescript + prettier)                         |
+| `pnpm format` | Prettier (semi:false, singleQuote:true, tailwindcss plugin)                                |
+| `pnpm seed`   | Seed database via `scripts/seed.ts`. Requires `--from file.json` (glob patterns supported) |
+| `pnpm scrape` | Scrape poems from French Wikisource (author/collection/config modes)                       |
 
 - Env vars in `.env.local` (gitignored). Template at `.env.local.example`.
 - Schema migrations: run `supabase db push` or paste SQL in Supabase Studio.
@@ -32,7 +32,7 @@ Digital library for public-domain poetry (French-first). Next.js 16 + Supabase.
 - **`src/lib/use-poem-status.ts`** — Hook for read/favorite tracking. Completely disjoint: when logged in, reads/writes Supabase `user_poem_status` only; when logged out, reads/writes localStorage only. No sync between the two.
 - **`src/proxy.ts`** — Next.js 16 proxy, refreshes Supabase auth session.
 - **`src/types/database.ts`** — Hand-crafted `Database` type for Supabase type inference.
-- **`scripts/seed.ts`** — Standalone Node script. Reads JSON in two formats (single-object scraper output or array of sample entries). Handles `tags?: string[]` on poems: creates tags via `ensureTag()`, links via `linkPoemTag()`. Defaults to `data/sample-poems.json`. Supports `--reset`.
+- **`scripts/seed.ts`** — Standalone Node script. Reads JSON in two formats (single-object scraper output or array of sample entries). Handles `tags?: string[]` on poems: creates tags via `ensureTag()`, links via `linkPoemTag()`. Requires `--from` (glob patterns supported). Supports `--reset`.
 - **`scripts/scrape-wikisource.ts`** — Wikisource scraper. Uses page URL for titles (already correct French casing), preserves parenthetical disambiguation for uniqueness. Normalizes curly apostrophes, newlines. 1.2s rate limiting.
 - **`scripts/convert-latex-sonnets.js`** — LaTeX sonnet converter (no deps). Reads `data/latex/{author}.tex` files. Parses `\sonnet` commands with optional epigraphs, subtitle, and content. Title logic: empty reuses previous, roman numerals get `–` separator, subtitles in `()`. Normalizes accents, `\\`/`\\!` to newlines, `\vin` to tab. Outputs JSON with `tags: ['sonnet']`.
 

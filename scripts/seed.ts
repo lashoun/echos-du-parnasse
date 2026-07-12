@@ -352,8 +352,31 @@ async function seedFromJSON(filePath: string, cliAuthor?: string) {
 
 async function main() {
   const args = parseArgs(process.argv)
+
+  // Expand glob patterns in --from paths
+  const { readdirSync } = await import('fs')
+  const path = await import('path')
+  const expanded: string[] = []
+  for (const p of args.from) {
+    if (p.includes('*') || p.includes('?')) {
+      const dir = path.dirname(p)
+      const pattern = path.basename(p)
+      const re = new RegExp(
+        '^' + pattern.replace(/\*/g, '.*').replace(/\?/g, '.') + '$',
+      )
+      const entries = readdirSync(dir)
+      for (const f of entries) {
+        if (re.test(f)) expanded.push(path.join(dir, f))
+      }
+      expanded.sort()
+    } else {
+      expanded.push(p)
+    }
+  }
+
+  const files = expanded.length > 0 ? expanded : (() => { throw new Error('No --from path provided. Usage: pnpm seed --from file.json') })()
+
   if (args.reset) await resetDatabase()
-  const files = args.from.length > 0 ? args.from : ['data/sample-poems.json']
   console.log('🌱 Seeding…\n')
   for (const f of files) await seedFromJSON(f, args.author)
   console.log('\n✨ Seeding complete!')
