@@ -40,7 +40,7 @@ Digital library for public-domain poetry (French-first). Next.js 16 + Supabase.
 
 - **Server-first:** All data fetching in async server components. Client components are leaf nodes only.
 - **Whitespace rendering:** Poem content uses `whitespace-pre-wrap` CSS so tabs and verse newlines render correctly.
-- **Cascading filters:** On `/poems`, selecting an author limits the collections and tags dropdowns to relevant options. Selecting a collection auto-selects its author and limits tags. All relationship data fetched server-side and filtered client-side via `useMemo`.
+- **Cascading filters:** On `/poems`, selecting an author limits the collections and tags dropdowns to relevant options. Selecting a collection auto-selects its author and limits tags. Read/favorite toggle buttons filter the poem list to only show poems marked as read or favorited by the current user. All relationship data fetched server-side and filtered client-side via `useMemo`.
 - **Random poem:** Accessed via `/poems?random=1` (uses `get_random_poem_id` RPC with current filters). Displayed as a full PoemCard with read/favorite toggles.
 - **Supabase queries:** No `Database` generic on `createServerClient` — type inference from plain `.select('col1, col2')` works without it.
 - **Env vars:** `NEXT_PUBLIC_*` for browser-safe vars. `SITE_URL` for production URL (auth redirects, canonical, sitemap). `GITHUB_USERNAME` for /about page links. `getSupabaseConfig()` returns null during build/static gen.

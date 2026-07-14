@@ -11,6 +11,8 @@ interface PoemsSearchParams {
   collection?: string
   tag?: string
   random?: string
+  read?: string
+  favorite?: string
 }
 
 export default async function PoemsPage({
@@ -22,7 +24,7 @@ export default async function PoemsPage({
   const showRandom = filters.random === '1'
   const supabase = await createSupabaseServerClient()
 
-  // Fetch filter options + relationship data for cascading filters
+  // Fetch filter options + relationship data
   const [
     { data: authors },
     { data: collections },
@@ -37,7 +39,7 @@ export default async function PoemsPage({
     supabase.from('poems').select('id, author_id, collection_id'),
   ])
 
-  // Build tag → author/collection relationships for cascading filters
+  // Build tag → author/collection relationships
   const poemMap = new Map((allPoems ?? []).map((p: any) => [p.id, p]))
   const tagRelationships: {
     tagId: string
@@ -46,14 +48,31 @@ export default async function PoemsPage({
   }[] = (poemTags ?? []).flatMap((pt: any) => {
     const poem = poemMap.get(pt.poem_id)
     if (!poem) return []
-    return [
-      {
-        tagId: pt.tag_id,
-        authorId: poem.author_id,
-        collectionId: poem.collection_id ?? null,
-      },
-    ]
+    return [{ tagId: pt.tag_id, authorId: poem.author_id, collectionId: poem.collection_id ?? null }]
   })
+
+  // Get current user for read/favorite filtering
+  const { data: authData } = await supabase.auth.getUser()
+  const userId = authData.user?.id ?? null
+
+  // Get poem IDs matching read/favorite status
+  let statusPoemIds: string[] | null = null
+  const hasReadFilter = filters.read === '1'
+  const hasFavFilter = filters.favorite === '1'
+
+  if ((hasReadFilter || hasFavFilter) && userId) {
+    let statusQuery = supabase
+      .from('user_poem_status')
+      .select('poem_id')
+      .eq('user_id', userId)
+
+    if (hasReadFilter && !hasFavFilter) statusQuery = statusQuery.eq('is_read', true)
+    else if (hasFavFilter && !hasReadFilter) statusQuery = statusQuery.eq('is_favorite', true)
+    else if (hasReadFilter && hasFavFilter) statusQuery = statusQuery.eq('is_read', true).eq('is_favorite', true)
+
+    const { data: statusRows } = await statusQuery
+    statusPoemIds = statusRows?.map((r) => r.poem_id) ?? []
+  }
 
   // Build the query dynamically
   let query = supabase.from('poems').select('id, title, content, author_id')
@@ -62,14 +81,11 @@ export default async function PoemsPage({
     const q = filters.q.trim()
     query = query.or(`title.ilike.%${q}%,content.ilike.%${q}%`)
   }
-  if (filters.author) {
-    query = query.eq('author_id', filters.author)
-  }
-  if (filters.collection) {
-    query = query.eq('collection_id', filters.collection)
-  }
+  if (filters.author) query = query.eq('author_id', filters.author)
+  if (filters.collection) query = query.eq('collection_id', filters.collection)
+  if (statusPoemIds !== null) query = query.in('id', statusPoemIds.length > 0 ? statusPoemIds : ['00000000-0000-0000-0000-000000000000'])
 
-  // Handle tag filter via poem_tags junction
+  // Handle tag filter
   let hasTagFilter = false
   if (filters.tag) {
     hasTagFilter = true
@@ -79,46 +95,41 @@ export default async function PoemsPage({
       .eq('tag_id', filters.tag)
 
     const ids = poemIds?.map((pt) => pt.poem_id) ?? []
-    if (ids.length > 0) {
-      query = query.in('id', ids)
-    }
+    if (ids.length > 0) query = query.in('id', ids)
   }
 
   const { data: poems } = await query.order('title', { ascending: true })
 
   // Build author map
-  const authorIds = [
-    ...new Set(poems?.map((p) => p.author_id).filter(Boolean) as string[]),
-  ]
+  const authorIds = [...new Set(poems?.map((p) => p.author_id).filter(Boolean) as string[])]
   let authorMap = new Map<string, string>()
   if (authorIds.length > 0) {
     const { data: fetched } = await supabase
       .from('authors')
       .select('id, name')
-      .in(
-        'id',
-        authorIds.length > 0
-          ? authorIds
-          : ['00000000-0000-0000-0000-000000000000'],
-      )
+      .in('id', authorIds.length > 0 ? authorIds : ['00000000-0000-0000-0000-000000000000'])
     authorMap = new Map(fetched?.map((a) => [a.id, a.name]) ?? [])
   }
 
   // Random poem from filtered set
-  let randomPoem: {
-    id: string
-    title: string
-    content: string
-    author_id: string | null
-  } | null = null
+  let randomPoem: { id: string; title: string; content: string; author_id: string | null } | null = null
   let randomPoemAuthor: string | null = null
 
   if (showRandom) {
-    const { data: randomId } = await supabase.rpc('get_random_poem_id', {
-      p_author_id: filters.author ?? null,
-      p_collection_id: filters.collection ?? null,
-      p_tag_id: filters.tag ?? null,
-    })
+    let randomId: string | null = null
+
+    // Use RPC when no read/fav filter, fallback to JS random for status filters
+    if (!hasReadFilter && !hasFavFilter) {
+      const { data: id } = await supabase.rpc('get_random_poem_id', {
+        p_author_id: filters.author ?? null,
+        p_collection_id: filters.collection ?? null,
+        p_tag_id: filters.tag ?? null,
+      })
+      randomId = id
+    } else if (poems && poems.length > 0) {
+      randomId = poems[Math.floor(Math.random() * poems.length)].id
+    }
+
     if (randomId) {
       const { data: p } = await supabase
         .from('poems')
@@ -128,11 +139,7 @@ export default async function PoemsPage({
       if (p) {
         randomPoem = p
         if (p.author_id) {
-          const { data: a } = await supabase
-            .from('authors')
-            .select('name')
-            .eq('id', p.author_id)
-            .single()
+          const { data: a } = await supabase.from('authors').select('name').eq('id', p.author_id).single()
           randomPoemAuthor = a?.name ?? null
         }
       }
@@ -140,11 +147,8 @@ export default async function PoemsPage({
   }
 
   const hasActiveFilters =
-    !!filters.q ||
-    !!filters.author ||
-    !!filters.collection ||
-    !!filters.tag ||
-    hasTagFilter
+    !!filters.q || !!filters.author || !!filters.collection || !!filters.tag ||
+    hasTagFilter || hasReadFilter || hasFavFilter
   const totalPoems = !hasActiveFilters ? (poems?.length ?? 0) : null
 
   return (
@@ -160,6 +164,8 @@ export default async function PoemsPage({
         author={filters.author}
         collection={filters.collection}
         tag={filters.tag}
+        read={filters.read}
+        favorite={filters.favorite}
         authors={authors ?? []}
         collections={collections ?? []}
         tags={tags ?? []}
@@ -170,21 +176,13 @@ export default async function PoemsPage({
         <section className="mb-8">
           <Link href={`/poems/${randomPoem.id}`}>
             <PoemCard
-              poem={{
-                id: randomPoem.id,
-                title: randomPoem.title,
-                content: randomPoem.content,
-                author_name: randomPoemAuthor,
-              }}
+              poem={{ id: randomPoem.id, title: randomPoem.title, content: randomPoem.content, author_name: randomPoemAuthor }}
               variant="full"
             />
           </Link>
         </section>
       ) : showRandom && !randomPoem ? (
-        <StateMessage
-          title="Aucun poème trouvé"
-          description="Aucun poème ne correspond à ces filtres."
-        />
+        <StateMessage title="Aucun poème trouvé" description="Aucun poème ne correspond à ces filtres." />
       ) : null}
 
       {!showRandom && (
@@ -205,9 +203,7 @@ export default async function PoemsPage({
                     id: poem.id,
                     title: poem.title,
                     content: poem.content,
-                    author_name: poem.author_id
-                      ? (authorMap.get(poem.author_id) ?? null)
-                      : null,
+                    author_name: poem.author_id ? (authorMap.get(poem.author_id) ?? null) : null,
                   }}
                 />
               ))}
@@ -215,21 +211,14 @@ export default async function PoemsPage({
           ) : (
             <StateMessage
               title="Aucun poème"
-              description={
-                filters.q
-                  ? `Aucun poème ne correspond à « ${filters.q} ».`
-                  : 'Aucun poème trouvé.'
-              }
+              description={filters.q ? `Aucun poème ne correspond à « ${filters.q} ».` : 'Aucun poème trouvé.'}
             />
           )}
         </>
       )}
 
       <nav className="mt-8">
-        <Link
-          href="/"
-          className="text-sm font-medium text-stone-600 underline underline-offset-2 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-200"
-        >
+        <Link href="/" className="text-sm font-medium text-stone-600 underline underline-offset-2 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-200">
           ← Retour à l&apos;accueil
         </Link>
       </nav>
