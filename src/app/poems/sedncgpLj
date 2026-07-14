@@ -40,18 +40,10 @@ export default async function PoemsPage({
   ])
 
   // Build tag → author/collection relationships
-  const poemMap = new Map(
-    (allPoems ?? []).map(
-      (p: {
-        id: string
-        author_id: string | null
-        collection_id: string | null
-      }) => [p.id, p],
-    ),
-  )
+  const poemMap = new Map((allPoems ?? []).map((p: { id: string; author_id: string | null; collection_id: string | null }) => [p.id, p]))
   const tagRelationships: {
     tagId: string
-    authorId: string | null
+    authorId: string
     collectionId: string | null
   }[] = (poemTags ?? []).flatMap((pt: { tag_id: string; poem_id: string }) => {
     const poem = poemMap.get(pt.poem_id)
@@ -133,7 +125,9 @@ export default async function PoemsPage({
   }
 
   // Handle tag filter
+  let hasTagFilter = false
   if (filters.tag) {
+    hasTagFilter = true
     const { data: poemIds } = await supabase
       .from('poem_tags')
       .select('poem_id')
@@ -212,6 +206,17 @@ export default async function PoemsPage({
       }
     }
   }
+
+  const hasActiveFilters =
+    !!filters.q ||
+    !!filters.author ||
+    !!filters.collection ||
+    !!filters.tag ||
+    hasTagFilter ||
+    readFilter === '1' ||
+    readFilter === '0' ||
+    favFilter === '1' ||
+    favFilter === '0'
 
   return (
     <PageShell>

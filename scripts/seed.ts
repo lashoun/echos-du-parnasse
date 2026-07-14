@@ -220,8 +220,8 @@ async function insertPoem(
     .eq('author_id', authorId)
     .maybeSingle()
   if (existing) {
-    const ec = (existing as any).content ?? ''
-    const eci = (existing as any).collection_id ?? null
+    const ec = existing.content ?? ''
+    const eci = existing.collection_id ?? null
     if (collectionId && !eci)
       await supabase
         .from('poems')
@@ -374,7 +374,14 @@ async function main() {
     }
   }
 
-  const files = expanded.length > 0 ? expanded : (() => { throw new Error('No --from path provided. Usage: pnpm seed --from file.json') })()
+  const files =
+    expanded.length > 0
+      ? expanded
+      : (() => {
+          throw new Error(
+            'No --from path provided. Usage: pnpm seed --from file.json',
+          )
+        })()
 
   if (args.reset) await resetDatabase()
   console.log('🌱 Seeding…\n')

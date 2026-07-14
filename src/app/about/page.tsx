@@ -38,8 +38,8 @@ export default function AboutPage() {
             mont Parnasse
           </a>
           , qui était célébré dans la Grèce antique, avec le mont Hélicon, comme
-          l'une des deux retraites des neuf Muses. Il donna par ailleurs son nom
-          à un mouvement littéraire français du XIXe siècle&nbsp;: le{' '}
+          l&apos;une des deux retraites des neuf Muses. Il donna par ailleurs
+          son nom à un mouvement littéraire français du XIXe siècle&nbsp;: le{' '}
           <a
             href="https://fr.wikipedia.org/wiki/Parnasse_(po%C3%A9sie)"
             className="underline underline-offset-2 hover:text-stone-800 dark:hover:text-stone-200"

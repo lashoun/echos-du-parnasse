@@ -22,25 +22,37 @@ export async function deleteAccount(formData: FormData) {
   const cookieStore = await cookies()
   const supabase = createServerClient(config.url, config.publishableKey, {
     cookies: {
-      getAll() { return cookieStore.getAll() },
+      getAll() {
+        return cookieStore.getAll()
+      },
       setAll(cookiesToSet) {
         try {
-          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-        } catch { /* ignore */ }
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options),
+          )
+        } catch {
+          /* ignore */
+        }
       },
     },
   })
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) {
     redirect('/login')
   }
 
   // Use the service role client to delete the user from auth.users
   // This cascades to user_poem_status via ON DELETE CASCADE.
-  const adminSupabase = createClient(config.url, process.env.SUPABASE_SECRET_KEY!, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  })
+  const adminSupabase = createClient(
+    config.url,
+    process.env.SUPABASE_SECRET_KEY!,
+    {
+      auth: { autoRefreshToken: false, persistSession: false },
+    },
+  )
 
   const { error } = await adminSupabase.auth.admin.deleteUser(user.id)
 

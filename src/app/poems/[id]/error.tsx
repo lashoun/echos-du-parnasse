@@ -4,7 +4,6 @@ import Link from 'next/link'
 import PageShell from '@/components/page-shell'
 
 export default function Error({
-  error,
   reset,
 }: {
   error: Error & { digest?: string }

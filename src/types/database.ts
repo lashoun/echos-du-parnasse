@@ -31,6 +31,11 @@ export interface Database {
         Insert: Omit<UserPoemStatus, 'updated_at'>
         Update: Partial<Omit<UserPoemStatus, 'user_id' | 'poem_id'>>
       }
+      admin_users: {
+        Row: AdminUser
+        Insert: Pick<AdminUser, 'user_id'>
+        Update: never
+      }
     }
     Views: Record<string, never>
     Functions: {
@@ -90,6 +95,13 @@ export interface Database {
           referencedColumns: ['id']
         }
       }
+      admin_users: {
+        foreign_key_admin_users_user_id: {
+          referencedEntity: 'auth.users'
+          columns: ['user_id']
+          referencedColumns: ['id']
+        }
+      }
     }
   }
 }
@@ -139,6 +151,11 @@ export interface UserPoemStatus {
   is_read: boolean
   is_favorite: boolean
   updated_at: string
+}
+
+export interface AdminUser {
+  user_id: string
+  created_at: string
 }
 
 /** Helper type for a poem joined with its author. */

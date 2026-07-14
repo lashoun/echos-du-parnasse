@@ -1,3 +1,4 @@
+
 export function getSupabaseConfig() {
   // During build/static generation, env vars may not be available.
   // Return null so callers can skip Supabase calls gracefully.

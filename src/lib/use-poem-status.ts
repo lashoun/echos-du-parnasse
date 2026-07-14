@@ -98,7 +98,10 @@ export function usePoemStatus(poemId: string) {
               },
               { onConflict: 'user_id, poem_id' },
             )
-            .then(() => {}, () => {})
+            .then(
+              () => {},
+              () => {},
+            )
         } else {
           const all = loadLocalAll()
           all[poemId] = next

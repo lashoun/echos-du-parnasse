@@ -132,10 +132,16 @@ supabase/
 | `/auth/callback`        | OAuth code exchange handler                     |
 | `/auth/signout`         | POST signout handler                            |
 | `/auth/auth-code-error` | OAuth error display                             |
+| `/admin`                | Admin dashboard (requires admin)                |
+| `/admin/authors`        | Admin: list, create, edit, delete authors       |
+| `/admin/collections`    | Admin: list, create, edit, delete collections   |
+| `/admin/poems`          | Admin: list, create, edit, delete poems + tags  |
+| `/admin/tags`           | Admin: list, create, delete tags                |
+| `/admin/admins`         | Admin: manage other administrators              |
 
 ## Data Model
 
-Six tables in `public` schema:
+Seven tables in `public` schema + `admin_users` RLS table:
 
 - **Author** — `id`, `name`, `birth_year`, `death_year`, `bio`, `created_at`
 - **Collection** — `id`, `title`, `author_id`, `year`, `description`, `created_at`
@@ -143,16 +149,17 @@ Six tables in `public` schema:
 - **Tag** — `id`, `name`
 - **PoemTag** — `poem_id`, `tag_id` (junction table)
 - **UserPoemStatus** — `user_id`, `poem_id`, `is_read`, `is_favorite`, `updated_at` (RLS: owner only)
+- **AdminUser** — `user_id`, `created_at` (RLS: own read, admin-only insert/delete), linked to `auth.users`
 
-Library tables have public read access. User data is owner-only via RLS.
+Library tables have public read access. User data is owner-only via RLS. Admin tables use role-based RLS with service-role bypass for management.
 
 ### Seed script env vars
 
-| Variable              | Required for | Used by           |
-| --------------------- | ------------ | ----------------- |
-| `SUPABASE_URL`        | Seed only    | `scripts/seed.ts` |
-| `SUPABASE_SECRET_KEY` | Seed only    | `scripts/seed.ts` |
-| `SITE_URL`            | Production   | Auth redirects    |
+| Variable              | Required for | Used by             |
+| --------------------- | ------------ | ------------------- |
+| `SUPABASE_URL`        | Seed only    | `scripts/seed.ts`   |
+| `SUPABASE_SECRET_KEY` | Seed only    | `scripts/seed.ts`   |
+| `SITE_URL`            | Production   | Auth redirects      |
 | `GITHUB_USERNAME`     | /about page  | GitHub links (user) |
 | `GITHUB_REPO`         | /about page  | GitHub links (repo) |
 

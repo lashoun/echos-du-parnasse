@@ -6,22 +6,22 @@ Digital library for public-domain poetry (French-first). Next.js 16 + Supabase.
 
 - **Stack:** Next.js 16 (App Router, `dynamic = 'force-dynamic'` root layout), React 19, TypeScript 5 (strict), Tailwind CSS v4, Supabase (PostgreSQL + Auth), pnpm, Prettier 3 + eslint-config-prettier + prettier-plugin-tailwindcss
 - **Entry point:** `src/app/layout.tsx` (root layout, `<html lang="fr">`, Geist font, `SiteHeader`, `SiteFooter`)
-- **Pages:** `/` homepage, `/poems` browse+filter+search, `/poems/[id]` detail, `/account` settings + delete, `/about`, `/privacy`, `/legal`, `/collections` / `/collections/[id]`, `/tags/[id]`, `/authors/[id]`, `/login`, `/auth/callback`, `/auth/signout`, `/auth/auth-code-error`
-- **Database:** Supabase PostgreSQL with 6 tables (authors, collections, poems, tags, poem_tags, user_poem_status) + RLS. 2 migrations in `supabase/migrations/`.
+- **Pages:** `/` homepage, `/poems` browse+filter+search, `/poems/[id]` detail, `/account` settings + delete, `/about`, `/privacy`, `/legal`, `/collections` / `/collections/[id]`, `/tags/[id]`, `/authors/[id]`, `/login`, `/auth/callback`, `/auth/signout`, `/auth/auth-code-error`, `/admin` dashboard, `/admin/authors` / `/admin/authors/new` / `/admin/authors/[id]/edit`, `/admin/collections` / `/admin/collections/new` / `/admin/collections/[id]/edit`, `/admin/poems` / `/admin/poems/new` / `/admin/poems/[id]/edit`, `/admin/tags`, `/admin/admins`
+- **Database:** Supabase PostgreSQL with 7 tables (authors, collections, poems, tags, poem_tags, user_poem_status, admin_users) + RLS. 3 migrations in `supabase/migrations/`.
 - **`@/` path alias** configured in `tsconfig.json` mapping to `./src/*`.
 
 ## Commands
 
-| Command            | Action                                                                                     |
-| ------------------ | ------------------------------------------------------------------------------------------ |
-| `pnpm dev`         | Start dev server (port 3000)                                                               |
-| `pnpm build`       | Type-check + production build (next build)                                                 |
-| `pnpm start`       | Run production build                                                                       |
-| `pnpm lint`        | ESLint (flat config via `eslint.config.mjs`, next/core-web-vitals + typescript + prettier) |
-| `pnpm format`      | Prettier (semi:false, singleQuote:true, tabWidth:2, tailwindcss plugin)                    |
-| `pnpm format:check`| Prettier check (no-write)                                                                  |
-| `pnpm seed`        | Seed database via `scripts/seed.ts`. Requires `--from file.json` (glob patterns supported) |
-| `pnpm scrape`      | Scrape poems from French Wikisource (author/collection/config modes)                       |
+| Command             | Action                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------ |
+| `pnpm dev`          | Start dev server (port 3000)                                                               |
+| `pnpm build`        | Type-check + production build (next build)                                                 |
+| `pnpm start`        | Run production build                                                                       |
+| `pnpm lint`         | ESLint (flat config via `eslint.config.mjs`, next/core-web-vitals + typescript + prettier) |
+| `pnpm format`       | Prettier (semi:false, singleQuote:true, tabWidth:2, tailwindcss plugin)                    |
+| `pnpm format:check` | Prettier check (no-write)                                                                  |
+| `pnpm seed`         | Seed database via `scripts/seed.ts`. Requires `--from file.json` (glob patterns supported) |
+| `pnpm scrape`       | Scrape poems from French Wikisource (author/collection/config modes)                       |
 
 - Env vars in `.env.local` (gitignored). Template at `.env.local.example`.
 - Schema migrations: run `supabase db push` or paste SQL in Supabase Studio.
@@ -29,10 +29,11 @@ Digital library for public-domain poetry (French-first). Next.js 16 + Supabase.
 ## Architecture
 
 - **`src/app/`** — Next.js App Router pages. Root layout forces `dynamic = 'force-dynamic'`. Homepage (`/`) shows daily featured poem via deterministic hash of date. Displays `DismissableBanner` when `?message=` is set (account deletion, etc.). `/account` shows user email and allows account deletion with confirmation. Custom `not-found.tsx` and root `loading.tsx`.
-- **`src/components/`** — Shared UI: `PageShell`, `SiteHeader` (Compte/email/Déconnexion when logged in), `SiteFooter` (legal links), `PoemCard` (list/full variants), `PoemFilters` (cascading filters + search + random), `PoemStatusToggle`, `DismissableBanner` (closable message banner), `StateMessage`.
+- **`src/components/`** — Shared UI: `PageShell`, `SiteHeader` (Compte/email/Déconnexion when logged in), `SiteFooter` (legal links), `PoemCard` (list/full variants), `PoemFilters` (cascading filters + search + random), `PoemStatusToggle`, `DismissableBanner` (closable message banner), `StateMessage`, `ConfirmDeleteForm` (client confirm dialog wrapper).
 - **`src/lib/supabase/`** — Three Supabase client factories (`client.ts` browser, `server.ts` server component, `proxy.ts` route handler proxy) + `env.ts` config helpers.
 - **`src/lib/use-poem-status.ts`** — Hook for read/favorite tracking. Completely disjoint: when logged in, reads/writes Supabase `user_poem_status` only; when logged out, reads/writes localStorage only. No sync between the two.
 - **`src/proxy.ts`** — Next.js 16 proxy, refreshes Supabase auth session.
+- **`src/lib/admin.ts`** — Admin auth helpers: `getCurrentUser()` and `requireAdmin()` for protecting admin routes and server actions.
 - **`src/types/database.ts`** — Hand-crafted `Database` type for Supabase type inference.
 - **`src/app/robots.ts` + `src/app/sitemap.ts`** — robots.txt and sitemap generation. Sitemap fetches all poems, collections, authors, tags dynamically.
 - **`scripts/seed.ts`** — Standalone Node script. Reads JSON in two formats (single-object scraper output or array of sample entries). Handles `tags?: string[]` on poems: creates tags via `ensureTag()`, links via `linkPoemTag()`. Requires `--from` (glob patterns supported). Supports `--reset`.
@@ -65,8 +66,8 @@ Digital library for public-domain poetry (French-first). Next.js 16 + Supabase.
 | `SUPABASE_URL`                         | Seed only   | `scripts/seed.ts`                      |
 | `SUPABASE_SECRET_KEY`                  | Seed only   | `scripts/seed.ts`                      |
 | `SITE_URL`                             | Production  | Auth redirects, canonical URL, sitemap |
-| `GITHUB_USERNAME`                      | /about page   | GitHub repository links (user)         |
-| `GITHUB_REPO`                          | /about page   | GitHub repository links (repo name)    |
+| `GITHUB_USERNAME`                      | /about page | GitHub repository links (user)         |
+| `GITHUB_REPO`                          | /about page | GitHub repository links (repo name)    |
 
 ## Notes
 

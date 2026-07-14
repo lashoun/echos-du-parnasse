@@ -11,7 +11,8 @@ export async function createSupabaseServerClient() {
       getAll() {
         return cookieStore.getAll()
       },
-      setAll(cookiesToSet, _headers) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      setAll(cookiesToSet, _) {
         try {
           cookiesToSet.forEach(({ name, value, options }) =>
             cookieStore.set(name, value, options),

@@ -16,7 +16,7 @@ interface CollectionOption {
 
 interface TagRelationship {
   tagId: string
-  authorId: string
+  authorId: string | null
   collectionId: string | null
 }
 
@@ -51,8 +51,12 @@ export default function PoemFilters({
   const [authorValue, setAuthorValue] = useState(author ?? '')
   const [collectionValue, setCollectionValue] = useState(collection ?? '')
   const [tagValue, setTagValue] = useState(tag ?? '')
-  const [readValue, setReadValue] = useState<'1' | '0' | null>(read === '1' ? '1' : read === '0' ? '0' : null)
-  const [favValue, setFavValue] = useState<'1' | '0' | null>(favorite === '1' ? '1' : favorite === '0' ? '0' : null)
+  const [readValue, setReadValue] = useState<'1' | '0' | null>(
+    read === '1' ? '1' : read === '0' ? '0' : null,
+  )
+  const [favValue, setFavValue] = useState<'1' | '0' | null>(
+    favorite === '1' ? '1' : favorite === '0' ? '0' : null,
+  )
 
   const availableCollections = useMemo(() => {
     if (!authorValue) return collections
@@ -69,7 +73,8 @@ export default function PoemFilters({
   const availableTags = useMemo(() => {
     let rels = tagRelationships
     if (authorValue) rels = rels.filter((r) => r.authorId === authorValue)
-    if (collectionValue) rels = rels.filter((r) => r.collectionId === collectionValue)
+    if (collectionValue)
+      rels = rels.filter((r) => r.collectionId === collectionValue)
     const validTagIds = new Set(rels.map((r) => r.tagId))
     return tags.filter((t) => validTagIds.has(t.id))
   }, [authorValue, collectionValue, tagRelationships, tags])
@@ -133,7 +138,9 @@ export default function PoemFilters({
         >
           <option value="">Tous les auteurs</option>
           {availableAuthors.map((a) => (
-            <option key={a.id} value={a.id}>{a.name}</option>
+            <option key={a.id} value={a.id}>
+              {a.name}
+            </option>
           ))}
         </select>
 
@@ -152,7 +159,9 @@ export default function PoemFilters({
         >
           <option value="">Toutes les collections</option>
           {availableCollections.map((c) => (
-            <option key={c.id} value={c.id}>{c.title}</option>
+            <option key={c.id} value={c.id}>
+              {c.title}
+            </option>
           ))}
         </select>
 
@@ -163,7 +172,9 @@ export default function PoemFilters({
         >
           <option value="">Tous les tags</option>
           {availableTags.map((t) => (
-            <option key={t.id} value={t.id}>{t.name}</option>
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
           ))}
         </select>
       </div>
@@ -180,7 +191,9 @@ export default function PoemFilters({
         </button>
 
         <button
-          onClick={() => setReadValue((v) => (v === null ? '1' : v === '1' ? '0' : null))}
+          onClick={() =>
+            setReadValue((v) => (v === null ? '1' : v === '1' ? '0' : null))
+          }
           className={`flex items-center gap-1.5 rounded border px-3 py-1.5 text-sm transition-colors ${
             readValue === '1'
               ? 'border-green-300 bg-green-50 text-green-700 dark:border-green-600 dark:bg-green-950 dark:text-green-300'
@@ -189,14 +202,26 @@ export default function PoemFilters({
                 : 'border-stone-300 text-stone-500 hover:border-stone-400 dark:border-stone-600 dark:text-stone-400 dark:hover:border-stone-500'
           }`}
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
-            {readValue === '1' ? <path d="M20 6 9 17l-5-5" /> : <circle cx="12" cy="12" r="10" />}
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="h-4 w-4"
+          >
+            {readValue === '1' ? (
+              <path d="M20 6 9 17l-5-5" />
+            ) : (
+              <circle cx="12" cy="12" r="10" />
+            )}
           </svg>
           {readValue === '0' ? 'Non lus' : 'Lus'}
         </button>
 
         <button
-          onClick={() => setFavValue((v) => (v === null ? '1' : v === '1' ? '0' : null))}
+          onClick={() =>
+            setFavValue((v) => (v === null ? '1' : v === '1' ? '0' : null))
+          }
           className={`flex items-center gap-1.5 rounded border px-3 py-1.5 text-sm transition-colors ${
             favValue === '1'
               ? 'border-rose-300 bg-rose-50 text-rose-600 dark:border-rose-600 dark:bg-rose-950 dark:text-rose-300'
@@ -205,7 +230,13 @@ export default function PoemFilters({
                 : 'border-stone-300 text-stone-500 hover:border-stone-400 dark:border-stone-600 dark:text-stone-400 dark:hover:border-stone-500'
           }`}
         >
-          <svg viewBox="0 0 24 24" fill={favValue === '1' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+          <svg
+            viewBox="0 0 24 24"
+            fill={favValue === '1' ? 'currentColor' : 'none'}
+            stroke="currentColor"
+            strokeWidth="2"
+            className="h-4 w-4"
+          >
             <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
           </svg>
           {favValue === '0' ? 'Non favoris' : 'Favoris'}

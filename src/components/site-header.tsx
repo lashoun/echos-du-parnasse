@@ -48,7 +48,11 @@ export default async function SiteHeader() {
               <span className="text-xs text-stone-500 dark:text-stone-400">
                 {userEmail}
               </span>
-              <form action="/auth/signout" method="post" className="inline-flex items-center">
+              <form
+                action="/auth/signout"
+                method="post"
+                className="inline-flex items-center"
+              >
                 <button
                   type="submit"
                   className="text-xs text-stone-500 underline underline-offset-2 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200"

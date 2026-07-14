@@ -58,7 +58,6 @@ const GITHUB_USER = process.env.GITHUB_USERNAME ?? 'unknown'
 const GITHUB_REPO = process.env.GITHUB_REPO ?? 'echos-du-parnasse'
 const USER_AGENT = `EchosDuParnasse/1.0 (https://github.com/${GITHUB_USER}/${GITHUB_REPO}; scraper for public-domain poems)`
 const RATE_LIMIT_MS = 1_200 // 1.2s between requests (respectful to Wikisource)
-const MAX_TITLE_LENGTH = 200
 
 // ── HTTP helpers ───────────────────────────────────────────────────
 
@@ -207,7 +206,7 @@ function extractPoemContent(html: string): string | null {
         const text = child.textContent?.trim()
         if (text) current += text
       } else if (child.nodeType === 1) {
-        const el = child as any
+        const el = child as unknown as HTMLElement
         if (el.tagName === 'BR') {
           if (current.trim()) lines.push(current.trim())
           else lines.push('')
@@ -273,7 +272,8 @@ async function parseDirectPoemPage(
 
   const content = rawContent.replace(/\u2019/g, "'").replace(/\n{3,}/g, '\n\n')
   const title = extractTitle(html, pageTitle).replace(/\u2019/g, "'")
-  const collection = extractCollection(pageTitle)?.replace(/\u2019/g, "'") ?? null
+  const collection =
+    extractCollection(pageTitle)?.replace(/\u2019/g, "'") ?? null
   const sourceUrl = `https://fr.wikisource.org/wiki/${pageTitle.replace(/ /g, '_')}`
 
   return { title, content, language: 'fr', collection, source_url: sourceUrl }
