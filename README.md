@@ -153,7 +153,8 @@ Library tables have public read access. User data is owner-only via RLS.
 | `SUPABASE_URL`        | Seed only    | `scripts/seed.ts` |
 | `SUPABASE_SECRET_KEY` | Seed only    | `scripts/seed.ts` |
 | `SITE_URL`            | Production   | Auth redirects    |
-| `GITHUB_USERNAME`     | /about page  | GitHub links      |
+| `GITHUB_USERNAME`     | /about page  | GitHub links (user) |
+| `GITHUB_REPO`         | /about page  | GitHub links (repo) |
 
 ## Design Principles
 

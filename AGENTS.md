@@ -65,7 +65,8 @@ Digital library for public-domain poetry (French-first). Next.js 16 + Supabase.
 | `SUPABASE_URL`                         | Seed only   | `scripts/seed.ts`                      |
 | `SUPABASE_SECRET_KEY`                  | Seed only   | `scripts/seed.ts`                      |
 | `SITE_URL`                             | Production  | Auth redirects, canonical URL, sitemap |
-| `GITHUB_USERNAME`                      | /about page | GitHub repository links                |
+| `GITHUB_USERNAME`                      | /about page   | GitHub repository links (user)         |
+| `GITHUB_REPO`                          | /about page   | GitHub repository links (repo name)    |
 
 ## Notes
 

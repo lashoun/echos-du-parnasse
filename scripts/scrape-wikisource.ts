@@ -54,8 +54,9 @@ interface ParsedArgs {
 // ── Constants ──────────────────────────────────────────────────────
 
 const WIKISOURCE_API = 'https://fr.wikisource.org/w/api.php'
-const USER_AGENT =
-  'EchosDuParnasse/1.0 (https://github.com/lashoun/echos-du-parnasse; scraper for public-domain poems)'
+const GITHUB_USER = process.env.GITHUB_USERNAME ?? 'unknown'
+const GITHUB_REPO = process.env.GITHUB_REPO ?? 'echos-du-parnasse'
+const USER_AGENT = `EchosDuParnasse/1.0 (https://github.com/${GITHUB_USER}/${GITHUB_REPO}; scraper for public-domain poems)`
 const RATE_LIMIT_MS = 1_200 // 1.2s between requests (respectful to Wikisource)
 const MAX_TITLE_LENGTH = 200
 
