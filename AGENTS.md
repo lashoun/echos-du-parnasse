@@ -4,34 +4,37 @@ Digital library for public-domain poetry (French-first). Next.js 16 + Supabase.
 
 ## Project
 
-- **Stack:** Next.js 16 (App Router), React 19, TypeScript 5 (strict), Tailwind CSS v4, Supabase (PostgreSQL + Auth), pnpm, Prettier 3 + eslint-config-prettier + prettier-plugin-tailwindcss
-- **Entry point:** `src/app/layout.tsx` (root layout, `<html lang="fr">`, Geist font, `SiteHeader`)
-- **Pages:** `/` homepage, `/poems` browse+filter+search, `/poems/[id]` detail, `/account` settings + delete, `/about`, `/privacy`, `/legal`, `/collections` / `/collections/[id]`, `/tags/[id]`, `/authors/[id]`, `/login`, `/auth/callback`, `/auth/signout`
-- **Database:** Supabase PostgreSQL with 6 tables (authors, collections, poems, tags, poem_tags, user_poem_status) + RLS. Migrations in `supabase/migrations/`.
+- **Stack:** Next.js 16 (App Router, `dynamic = 'force-dynamic'` root layout), React 19, TypeScript 5 (strict), Tailwind CSS v4, Supabase (PostgreSQL + Auth), pnpm, Prettier 3 + eslint-config-prettier + prettier-plugin-tailwindcss
+- **Entry point:** `src/app/layout.tsx` (root layout, `<html lang="fr">`, Geist font, `SiteHeader`, `SiteFooter`)
+- **Pages:** `/` homepage, `/poems` browse+filter+search, `/poems/[id]` detail, `/account` settings + delete, `/about`, `/privacy`, `/legal`, `/collections` / `/collections/[id]`, `/tags/[id]`, `/authors/[id]`, `/login`, `/auth/callback`, `/auth/signout`, `/auth/auth-code-error`
+- **Database:** Supabase PostgreSQL with 6 tables (authors, collections, poems, tags, poem_tags, user_poem_status) + RLS. 2 migrations in `supabase/migrations/`.
+- **`@/` path alias** configured in `tsconfig.json` mapping to `./src/*`.
 
 ## Commands
 
-| Command       | Action                                                                                     |
-| ------------- | ------------------------------------------------------------------------------------------ |
-| `pnpm dev`    | Start dev server (port 3000)                                                               |
-| `pnpm build`  | Type-check + production build                                                              |
-| `pnpm start`  | Run production build                                                                       |
-| `pnpm lint`   | ESLint (flat config, next/core-web-vitals + typescript + prettier)                         |
-| `pnpm format` | Prettier (semi:false, singleQuote:true, tailwindcss plugin)                                |
-| `pnpm seed`   | Seed database via `scripts/seed.ts`. Requires `--from file.json` (glob patterns supported) |
-| `pnpm scrape` | Scrape poems from French Wikisource (author/collection/config modes)                       |
+| Command            | Action                                                                                     |
+| ------------------ | ------------------------------------------------------------------------------------------ |
+| `pnpm dev`         | Start dev server (port 3000)                                                               |
+| `pnpm build`       | Type-check + production build (next build)                                                 |
+| `pnpm start`       | Run production build                                                                       |
+| `pnpm lint`        | ESLint (flat config via `eslint.config.mjs`, next/core-web-vitals + typescript + prettier) |
+| `pnpm format`      | Prettier (semi:false, singleQuote:true, tabWidth:2, tailwindcss plugin)                    |
+| `pnpm format:check`| Prettier check (no-write)                                                                  |
+| `pnpm seed`        | Seed database via `scripts/seed.ts`. Requires `--from file.json` (glob patterns supported) |
+| `pnpm scrape`      | Scrape poems from French Wikisource (author/collection/config modes)                       |
 
 - Env vars in `.env.local` (gitignored). Template at `.env.local.example`.
 - Schema migrations: run `supabase db push` or paste SQL in Supabase Studio.
 
 ## Architecture
 
-- **`src/app/`** — Next.js App Router pages. Homepage (`/`) shows daily featured poem via deterministic hash of date. Displays `DismissableBanner` when `?message=` is set (account deletion, etc.). `/account` shows user email and allows account deletion with confirmation.
+- **`src/app/`** — Next.js App Router pages. Root layout forces `dynamic = 'force-dynamic'`. Homepage (`/`) shows daily featured poem via deterministic hash of date. Displays `DismissableBanner` when `?message=` is set (account deletion, etc.). `/account` shows user email and allows account deletion with confirmation. Custom `not-found.tsx` and root `loading.tsx`.
 - **`src/components/`** — Shared UI: `PageShell`, `SiteHeader` (Compte/email/Déconnexion when logged in), `SiteFooter` (legal links), `PoemCard` (list/full variants), `PoemFilters` (cascading filters + search + random), `PoemStatusToggle`, `DismissableBanner` (closable message banner), `StateMessage`.
-- **`src/lib/supabase/`** — Three Supabase client factories + proxy session refresh.
+- **`src/lib/supabase/`** — Three Supabase client factories (`client.ts` browser, `server.ts` server component, `proxy.ts` route handler proxy) + `env.ts` config helpers.
 - **`src/lib/use-poem-status.ts`** — Hook for read/favorite tracking. Completely disjoint: when logged in, reads/writes Supabase `user_poem_status` only; when logged out, reads/writes localStorage only. No sync between the two.
 - **`src/proxy.ts`** — Next.js 16 proxy, refreshes Supabase auth session.
 - **`src/types/database.ts`** — Hand-crafted `Database` type for Supabase type inference.
+- **`src/app/robots.ts` + `src/app/sitemap.ts`** — robots.txt and sitemap generation. Sitemap fetches all poems, collections, authors, tags dynamically.
 - **`scripts/seed.ts`** — Standalone Node script. Reads JSON in two formats (single-object scraper output or array of sample entries). Handles `tags?: string[]` on poems: creates tags via `ensureTag()`, links via `linkPoemTag()`. Requires `--from` (glob patterns supported). Supports `--reset`.
 - **`scripts/scrape-wikisource.ts`** — Wikisource scraper. Uses page URL for titles (already correct French casing), preserves parenthetical disambiguation for uniqueness. Normalizes curly apostrophes, newlines. 1.2s rate limiting.
 - **`scripts/convert-latex-sonnets.js`** — LaTeX sonnet converter (no deps). Reads `data/latex/{author}.tex` files. Parses `\sonnet` commands with optional epigraphs, subtitle, and content. Title logic: empty reuses previous, roman numerals get `— ` separator, subtitles in `()`. Normalizes accents, `\\`/`\\!` to newlines, `\vin` to tab, `---`/`--` to em/en-dash. Adds French non-breaking spaces before punctuation (narrow U+202F for `!?;`, regular U+00A0 for `:`). Outputs JSON with `tags: ['sonnet']`.
@@ -44,9 +47,9 @@ Digital library for public-domain poetry (French-first). Next.js 16 + Supabase.
 - **Random poem:** Accessed via `/poems?random=1` (uses `get_random_poem_id` RPC with current filters). Displayed as a full PoemCard with read/favorite toggles.
 - **Supabase queries:** No `Database` generic on `createServerClient` — type inference from plain `.select('col1, col2')` works without it.
 - **Env vars:** `NEXT_PUBLIC_*` for browser-safe vars. `SITE_URL` for production URL (auth redirects, canonical, sitemap). `GITHUB_USERNAME` for /about page links. `getSupabaseConfig()` returns null during build/static gen.
-- **Formatting:** Prettier 3 with `semi: false`, `singleQuote: true`, `trailingComma: all`, `prettier-plugin-tailwindcss`.
-- **Tailwind:** v4 CSS-first config. Dark mode via `prefers-color-scheme` media query.
-- **Error handling:** Per-route `error.tsx` and `loading.tsx` for `/poems` and `/poems/[id]`.
+- **Formatting:** Prettier 3 with `semi: false`, `singleQuote: true`, `tabWidth: 2`, `trailingComma: all`, `prettier-plugin-tailwindcss`.
+- **Tailwind:** v4 CSS-first config (`@import 'tailwindcss'` + `@theme inline` block). Dark mode via `prefers-color-scheme` media query. Custom theme tokens (`--color-primary`, `--color-muted`, etc.).
+- **Error handling:** Root `loading.tsx` + per-route `error.tsx` and `loading.tsx` for `/poems` and `/poems/[id]`.
 - **Strings:** All user-facing text in French.
 - **Auth:** Server actions at `/login`. Signup passes `emailRedirectTo` from `SITE_URL` env var. OAuth callback at `/auth/callback`. Signout via POST to `/auth/signout`. Account deletion at `/account` uses the service role key via `auth.admin.deleteUser()` (cascades to `user_poem_status`).
 - **Seed script:** `INSERT` with manual existence check, never `upsert`. Content-differing duplicates get a disambiguated title with the first verse line in parentheses.
