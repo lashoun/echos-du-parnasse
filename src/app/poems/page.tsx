@@ -57,21 +57,30 @@ export default async function PoemsPage({
 
   // Get poem IDs matching read/favorite status
   let statusPoemIds: string[] | null = null
-  const hasReadFilter = filters.read === '1'
-  const hasFavFilter = filters.favorite === '1'
+  let excludeStatusIds = false
+  const readFilter = filters.read
+  const favFilter = filters.favorite
 
-  if ((hasReadFilter || hasFavFilter) && userId) {
+  if ((readFilter === '1' || readFilter === '0' || favFilter === '1' || favFilter === '0') && userId) {
+    // For negative filters (read=0), we fetch the positive IDs then exclude them
+    const positiveRead = readFilter === '0' ? '1' : readFilter
+    const positiveFav = favFilter === '0' ? '1' : favFilter
+
     let statusQuery = supabase
       .from('user_poem_status')
       .select('poem_id')
       .eq('user_id', userId)
 
-    if (hasReadFilter && !hasFavFilter) statusQuery = statusQuery.eq('is_read', true)
-    else if (hasFavFilter && !hasReadFilter) statusQuery = statusQuery.eq('is_favorite', true)
-    else if (hasReadFilter && hasFavFilter) statusQuery = statusQuery.eq('is_read', true).eq('is_favorite', true)
+    const hasPositiveRead = positiveRead === '1'
+    const hasPositiveFav = positiveFav === '1'
+
+    if (hasPositiveRead && !hasPositiveFav) statusQuery = statusQuery.eq('is_read', true)
+    else if (hasPositiveFav && !hasPositiveRead) statusQuery = statusQuery.eq('is_favorite', true)
+    else if (hasPositiveRead && hasPositiveFav) statusQuery = statusQuery.eq('is_read', true).eq('is_favorite', true)
 
     const { data: statusRows } = await statusQuery
     statusPoemIds = statusRows?.map((r) => r.poem_id) ?? []
+    excludeStatusIds = readFilter === '0' || favFilter === '0'
   }
 
   // Build the query dynamically
@@ -83,7 +92,13 @@ export default async function PoemsPage({
   }
   if (filters.author) query = query.eq('author_id', filters.author)
   if (filters.collection) query = query.eq('collection_id', filters.collection)
-  if (statusPoemIds !== null) query = query.in('id', statusPoemIds.length > 0 ? statusPoemIds : ['00000000-0000-0000-0000-000000000000'])
+  if (statusPoemIds !== null) {
+    if (excludeStatusIds) {
+      query = query.not('id', 'in', `(${statusPoemIds.length > 0 ? statusPoemIds.join(',') : '00000000-0000-0000-0000-000000000000'})`)
+    } else {
+      query = query.in('id', statusPoemIds.length > 0 ? statusPoemIds : ['00000000-0000-0000-0000-000000000000'])
+    }
+  }
 
   // Handle tag filter
   let hasTagFilter = false
@@ -119,7 +134,7 @@ export default async function PoemsPage({
     let randomId: string | null = null
 
     // Use RPC when no read/fav filter, fallback to JS random for status filters
-    if (!hasReadFilter && !hasFavFilter) {
+    if (readFilter !== '1' && readFilter !== '0' && favFilter !== '1' && favFilter !== '0') {
       const { data: id } = await supabase.rpc('get_random_poem_id', {
         p_author_id: filters.author ?? null,
         p_collection_id: filters.collection ?? null,
@@ -148,7 +163,7 @@ export default async function PoemsPage({
 
   const hasActiveFilters =
     !!filters.q || !!filters.author || !!filters.collection || !!filters.tag ||
-    hasTagFilter || hasReadFilter || hasFavFilter
+    hasTagFilter || readFilter === '1' || readFilter === '0' || favFilter === '1' || favFilter === '0'
   const totalPoems = !hasActiveFilters ? (poems?.length ?? 0) : null
 
   return (

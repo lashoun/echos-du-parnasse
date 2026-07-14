@@ -51,8 +51,8 @@ export default function PoemFilters({
   const [authorValue, setAuthorValue] = useState(author ?? '')
   const [collectionValue, setCollectionValue] = useState(collection ?? '')
   const [tagValue, setTagValue] = useState(tag ?? '')
-  const [readValue, setReadValue] = useState(read === '1')
-  const [favValue, setFavValue] = useState(favorite === '1')
+  const [readValue, setReadValue] = useState<'1' | '0' | null>(read === '1' ? '1' : read === '0' ? '0' : null)
+  const [favValue, setFavValue] = useState<'1' | '0' | null>(favorite === '1' ? '1' : favorite === '0' ? '0' : null)
 
   const availableCollections = useMemo(() => {
     if (!authorValue) return collections
@@ -80,8 +80,8 @@ export default function PoemFilters({
     if (authorValue) params.set('author', authorValue)
     if (collectionValue) params.set('collection', collectionValue)
     if (tagValue) params.set('tag', tagValue)
-    if (readValue) params.set('read', '1')
-    if (favValue) params.set('favorite', '1')
+    if (readValue) params.set('read', readValue)
+    if (favValue) params.set('favorite', favValue)
     for (const [k, v] of Object.entries(extra)) {
       if (v) params.set(k, v)
     }
@@ -99,8 +99,8 @@ export default function PoemFilters({
     setAuthorValue('')
     setCollectionValue('')
     setTagValue('')
-    setReadValue(false)
-    setFavValue(false)
+    setReadValue(null)
+    setFavValue(null)
     router.push('/poems')
   }
 
@@ -180,31 +180,35 @@ export default function PoemFilters({
         </button>
 
         <button
-          onClick={() => setReadValue((v) => !v)}
+          onClick={() => setReadValue((v) => (v === null ? '1' : v === '1' ? '0' : null))}
           className={`flex items-center gap-1.5 rounded border px-3 py-1.5 text-sm transition-colors ${
-            readValue
+            readValue === '1'
               ? 'border-green-300 bg-green-50 text-green-700 dark:border-green-600 dark:bg-green-950 dark:text-green-300'
-              : 'border-stone-300 text-stone-500 hover:border-stone-400 dark:border-stone-600 dark:text-stone-400 dark:hover:border-stone-500'
+              : readValue === '0'
+                ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-600 dark:bg-amber-950 dark:text-amber-300'
+                : 'border-stone-300 text-stone-500 hover:border-stone-400 dark:border-stone-600 dark:text-stone-400 dark:hover:border-stone-500'
           }`}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
-            {readValue ? <path d="M20 6 9 17l-5-5" /> : <circle cx="12" cy="12" r="10" />}
+            {readValue === '1' ? <path d="M20 6 9 17l-5-5" /> : <circle cx="12" cy="12" r="10" />}
           </svg>
-          Lu
+          {readValue === '0' ? 'Non lus' : 'Lus'}
         </button>
 
         <button
-          onClick={() => setFavValue((v) => !v)}
+          onClick={() => setFavValue((v) => (v === null ? '1' : v === '1' ? '0' : null))}
           className={`flex items-center gap-1.5 rounded border px-3 py-1.5 text-sm transition-colors ${
-            favValue
+            favValue === '1'
               ? 'border-rose-300 bg-rose-50 text-rose-600 dark:border-rose-600 dark:bg-rose-950 dark:text-rose-300'
-              : 'border-stone-300 text-stone-500 hover:border-stone-400 dark:border-stone-600 dark:text-stone-400 dark:hover:border-stone-500'
+              : favValue === '0'
+                ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-600 dark:bg-amber-950 dark:text-amber-300'
+                : 'border-stone-300 text-stone-500 hover:border-stone-400 dark:border-stone-600 dark:text-stone-400 dark:hover:border-stone-500'
           }`}
         >
-          <svg viewBox="0 0 24 24" fill={favValue ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+          <svg viewBox="0 0 24 24" fill={favValue === '1' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" className="h-4 w-4">
             <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
           </svg>
-          Favoris
+          {favValue === '0' ? 'Non favoris' : 'Favoris'}
         </button>
 
         <button
