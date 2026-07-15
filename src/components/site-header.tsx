@@ -64,7 +64,7 @@ export default async function SiteHeader() {
                 >
                   Compte
                 </Link>
-                <span className="invisible absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap rounded bg-stone-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:visible group-hover:opacity-100 dark:bg-stone-200 dark:text-stone-900">
+                <span className="invisible absolute top-full left-1/2 mt-1 -translate-x-1/2 rounded bg-stone-800 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:visible group-hover:opacity-100 dark:bg-stone-200 dark:text-stone-900">
                   {userEmail}
                 </span>
               </div>

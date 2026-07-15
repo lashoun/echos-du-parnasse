@@ -88,9 +88,14 @@ export default function PoemFilters({
       const a = overrides?.authorIds ?? authorIds
       const c = overrides?.collectionIds ?? collectionIds
       const t = overrides?.tagIds ?? tagIds
-      const r = overrides?.readValue ?? readValue
-      const f = overrides?.favValue ?? favValue
-      const sq = overrides?.searchValue ?? debouncedSearch
+      const r =
+        overrides?.readValue !== undefined ? overrides.readValue : readValue
+      const f =
+        overrides?.favValue !== undefined ? overrides.favValue : favValue
+      const sq =
+        overrides?.searchValue !== undefined
+          ? (overrides.searchValue ?? '')
+          : debouncedSearch
 
       const params = new URLSearchParams()
       if (sq.trim()) params.set('q', sq.trim())

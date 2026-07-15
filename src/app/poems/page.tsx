@@ -11,10 +11,7 @@ function randomIndex(length: number): number {
   return Math.floor(Math.random() * length)
 }
 
-function buildPageUrl(
-  filters: PoemsSearchParams,
-  page: number,
-): string {
+function buildPageUrl(filters: PoemsSearchParams, page: number): string {
   const params = new URLSearchParams()
   if (filters.q) params.set('q', filters.q)
   if (filters.author) params.set('author', filters.author)
@@ -179,7 +176,9 @@ export default async function PoemsPage({
   }
 
   // Build a count query (same filters, no pagination)
-  let countQuery = supabase.from('poems').select('*', { count: 'exact', head: true })
+  let countQuery = supabase
+    .from('poems')
+    .select('*', { count: 'exact', head: true })
 
   if (filters.q && filters.q.trim()) {
     const q = filters.q.trim()
@@ -420,9 +419,7 @@ export default async function PoemsPage({
           {Array.from({ length: totalPages }, (_, i) => i + 1)
             .filter(
               (p) =>
-                p === 1 ||
-                p === totalPages ||
-                Math.abs(p - currentPage) <= 2,
+                p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2,
             )
             .map((p, idx, arr) => (
               <React.Fragment key={p}>

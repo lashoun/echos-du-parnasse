@@ -122,7 +122,7 @@ supabase/
 | Path                    | Description                                     |
 | ----------------------- | ----------------------------------------------- |
 | `/`                     | Homepage — daily featured poem, nav links       |
-| `/poems`                | Browse, search & filter all poems + random poem |
+| `/poems`                | Browse, search & filter all poems (multi-select chips, pagination 50/page) + random poem |
 | `/poems/[id]`           | Poem detail + prev/next nav                     |
 | `/collections`          | Collection listing                              |
 | `/collections/[id]`     | Collection detail with ordered poems            |
