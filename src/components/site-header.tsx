@@ -6,6 +6,7 @@ import { cookies } from 'next/headers'
 export default async function SiteHeader() {
   const config = getSupabaseConfig()
   let userEmail: string | null = null
+  let isAdmin = false
 
   if (config) {
     try {
@@ -22,6 +23,15 @@ export default async function SiteHeader() {
       })
       const { data } = await supabase.auth.getUser()
       userEmail = data?.user?.email ?? null
+
+      if (data?.user) {
+        const { data: adminRow } = await supabase
+          .from('admin_users')
+          .select('user_id')
+          .eq('user_id', data.user.id)
+          .maybeSingle()
+        isAdmin = adminRow !== null
+      }
     } catch {
       // Silently ignore
     }
@@ -39,15 +49,25 @@ export default async function SiteHeader() {
         <div className="flex items-center gap-3">
           {userEmail ? (
             <>
-              <Link
-                href="/account"
-                className="text-xs text-stone-500 underline underline-offset-2 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200"
-              >
-                Compte
-              </Link>
-              <span className="text-xs text-stone-500 dark:text-stone-400">
-                {userEmail}
-              </span>
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="text-xs text-amber-600 underline underline-offset-2 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-200"
+                >
+                  Admin
+                </Link>
+              )}
+              <div className="group relative inline-flex items-center">
+                <Link
+                  href="/account"
+                  className="text-xs text-stone-500 underline underline-offset-2 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200"
+                >
+                  Compte
+                </Link>
+                <span className="invisible absolute left-1/2 -translate-x-1/2 top-full mt-1 whitespace-nowrap rounded bg-stone-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:visible group-hover:opacity-100 dark:bg-stone-200 dark:text-stone-900">
+                  {userEmail}
+                </span>
+              </div>
               <form
                 action="/auth/signout"
                 method="post"
