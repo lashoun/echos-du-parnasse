@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import PageShell from '@/components/page-shell'
 import PoemStatusToggle from '@/components/poem-status-toggle'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { getCurrentUser } from '@/lib/admin'
 
 export default async function PoemDetailPage({
   params,
@@ -24,6 +25,10 @@ export default async function PoemDetailPage({
   if (!poem) {
     notFound()
   }
+
+  // Check if current user is admin (for edit button)
+  const currentUser = await getCurrentUser()
+  const isAdmin = currentUser?.isAdmin ?? false
 
   // Fetch the author if present
   let author: {
@@ -98,8 +103,16 @@ export default async function PoemDetailPage({
               )}
             </p>
           )}
-          <div className="mt-3">
+          <div className="mt-3 flex items-center gap-3">
             <PoemStatusToggle poemId={poem.id} />
+            {isAdmin && (
+              <Link
+                href={`/admin/poems/${poem.id}/edit`}
+                className="rounded border border-amber-300 bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-100 dark:border-amber-600 dark:bg-amber-950 dark:text-amber-300 dark:hover:bg-amber-900"
+              >
+                Modifier
+              </Link>
+            )}
           </div>
         </header>
 
