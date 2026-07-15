@@ -81,7 +81,8 @@ src/
 ├── components/
 │   ├── dismissable-banner.tsx  Closable message banner
 │   ├── poem-card.tsx     Poem display (list + full variants)
-│   ├── poem-filters.tsx  Cascading search/filter controls
+│   ├── poem-filters.tsx  Multi-select chip filters (author/collection/tag, OR logic)
+│   ├── tag-input.tsx     Searchable multi-select tag chips (supports creating new tags)
 │   ├── poem-status-toggle.tsx  Read/favorite buttons
 │   ├── page-shell.tsx    Page layout wrapper
 │   ├── site-footer.tsx   Footer with legal links
@@ -95,6 +96,9 @@ src/
 │   ├── use-poem-status.ts  Disjoint read/favorite hook (Supabase when logged in, localStorage when not)
 │   └── utils.ts          Shared helpers
 ├── proxy.ts              Supabase auth session refresh
+├── lib/admin.ts          Admin auth helpers (getCurrentUser, requireAdmin)
+├── components/
+│   └── confirm-delete-form.tsx  Client-side confirm dialog for delete buttons
 └── types/database.ts     Schema types
 scripts/
 ├── seed.ts               Poem seeder (reads JSON files from data/)

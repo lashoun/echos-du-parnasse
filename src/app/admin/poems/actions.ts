@@ -5,6 +5,48 @@ import { redirect } from 'next/navigation'
 import { requireAdmin } from '@/lib/admin'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 
+/**
+ * Given new tag names from the form, ensure they exist in the tags table
+ * and return their IDs, combined with the pre-existing tag IDs.
+ */
+async function resolveTagIds(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  formData: FormData,
+): Promise<string[]> {
+  const existingTagIds = formData.getAll('tag_ids') as string[]
+  const newTagNames = formData.getAll('new_tag_names') as string[]
+
+  if (newTagNames.length === 0) return existingTagIds
+
+  // Create missing tags one by one (only the seed script's ensureTag pattern)
+  const createdIds: string[] = []
+  for (const name of newTagNames) {
+    const trimmed = name.trim()
+    if (!trimmed) continue
+
+    // Check if it exists already (race-condition-safe via UNIQUE constraint)
+    const { data: existing } = await supabase
+      .from('tags')
+      .select('id')
+      .eq('name', trimmed)
+      .maybeSingle()
+
+    if (existing) {
+      createdIds.push(existing.id)
+    } else {
+      const { data: created } = await supabase
+        .from('tags')
+        .insert({ name: trimmed })
+        .select('id')
+        .single()
+
+      if (created) createdIds.push(created.id)
+    }
+  }
+
+  return [...existingTagIds, ...createdIds]
+}
+
 export async function createPoem(formData: FormData) {
   await requireAdmin()
 
@@ -16,7 +58,7 @@ export async function createPoem(formData: FormData) {
   const collectionId = formData.get('collection_id') as string
   const position = formData.get('position_in_collection') as string
   const language = (formData.get('language') as string) || 'fr'
-  const tagIds = formData.getAll('tag_ids') as string[]
+  const tagIds = await resolveTagIds(supabase, formData)
 
   if (!title?.trim()) {
     redirect('/admin/poems/new?error=Le titre est requis')
@@ -69,7 +111,7 @@ export async function updatePoem(poemId: string, formData: FormData) {
   const collectionId = formData.get('collection_id') as string
   const position = formData.get('position_in_collection') as string
   const language = (formData.get('language') as string) || 'fr'
-  const tagIds = formData.getAll('tag_ids') as string[]
+  const tagIds = await resolveTagIds(supabase, formData)
 
   if (!title?.trim()) {
     redirect(`/admin/poems/${poemId}/edit?error=Le titre est requis`)

@@ -1,7 +1,8 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import TagInput from './tag-input'
 
 interface FilterOption {
   id: string
@@ -33,6 +34,15 @@ interface PoemFiltersProps {
   tagRelationships: TagRelationship[]
 }
 
+function useDebounce<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay)
+    return () => clearTimeout(id)
+  }, [value, delay])
+  return debounced
+}
+
 export default function PoemFilters({
   q,
   author,
@@ -46,11 +56,19 @@ export default function PoemFilters({
   tagRelationships,
 }: PoemFiltersProps) {
   const router = useRouter()
-
   const [searchValue, setSearchValue] = useState(q ?? '')
-  const [authorValue, setAuthorValue] = useState(author ?? '')
-  const [collectionValue, setCollectionValue] = useState(collection ?? '')
-  const [tagValue, setTagValue] = useState(tag ?? '')
+  const debouncedSearch = useDebounce(searchValue, 300)
+
+  // Whether this is the first render (to avoid double-navigation on init)
+  const isFirstRender = useRef(true)
+
+  const [authorIds, setAuthorIds] = useState<string[]>(
+    author ? author.split(',') : [],
+  )
+  const [collectionIds, setCollectionIds] = useState<string[]>(
+    collection ? collection.split(',') : [],
+  )
+  const [tagIds, setTagIds] = useState<string[]>(tag ? tag.split(',') : [])
   const [readValue, setReadValue] = useState<'1' | '0' | null>(
     read === '1' ? '1' : read === '0' ? '0' : null,
   )
@@ -58,55 +76,127 @@ export default function PoemFilters({
     favorite === '1' ? '1' : favorite === '0' ? '0' : null,
   )
 
-  const availableCollections = useMemo(() => {
-    if (!authorValue) return collections
-    return collections.filter((c) => c.author_id === authorValue)
-  }, [authorValue, collections])
+  const navigate = useCallback(
+    (overrides?: {
+      authorIds?: string[]
+      collectionIds?: string[]
+      tagIds?: string[]
+      readValue?: '1' | '0' | null
+      favValue?: '1' | '0' | null
+      searchValue?: string
+    }) => {
+      const a = overrides?.authorIds ?? authorIds
+      const c = overrides?.collectionIds ?? collectionIds
+      const t = overrides?.tagIds ?? tagIds
+      const r = overrides?.readValue ?? readValue
+      const f = overrides?.favValue ?? favValue
+      const sq = overrides?.searchValue ?? debouncedSearch
 
+      const params = new URLSearchParams()
+      if (sq.trim()) params.set('q', sq.trim())
+      if (a.length > 0) params.set('author', a.join(','))
+      if (c.length > 0) params.set('collection', c.join(','))
+      if (t.length > 0) params.set('tag', t.join(','))
+      if (r) params.set('read', r)
+      if (f) params.set('favorite', f)
+      const qs = params.toString()
+      router.push(qs ? `/poems?${qs}` : '/poems')
+    },
+    [
+      authorIds,
+      collectionIds,
+      tagIds,
+      readValue,
+      favValue,
+      debouncedSearch,
+      router,
+    ],
+  )
+
+  // Keep navigateRef in sync with the latest navigate function
+  const navigateRef = useRef(navigate)
+  useEffect(() => {
+    navigateRef.current = navigate
+  }, [navigate])
+
+  // Navigate when debounced search changes
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+    navigateRef.current({ searchValue: debouncedSearch })
+  }, [debouncedSearch])
+
+  const navigateAuthor = useCallback(
+    (ids: string[]) => {
+      setAuthorIds(ids)
+      navigate({ authorIds: ids })
+    },
+    [navigate],
+  )
+
+  const navigateCollection = useCallback(
+    (ids: string[]) => {
+      setCollectionIds(ids)
+      navigate({ collectionIds: ids })
+    },
+    [navigate],
+  )
+
+  const navigateTag = useCallback(
+    (ids: string[]) => {
+      setTagIds(ids)
+      navigate({ tagIds: ids })
+    },
+    [navigate],
+  )
+
+  const cycleRead = useCallback(() => {
+    const next = readValue === null ? '1' : readValue === '1' ? '0' : null
+    setReadValue(next)
+    navigate({ readValue: next })
+  }, [readValue, navigate])
+
+  const cycleFav = useCallback(() => {
+    const next = favValue === null ? '1' : favValue === '1' ? '0' : null
+    setFavValue(next)
+    navigate({ favValue: next })
+  }, [favValue, navigate])
+
+  // Collections filter: show all collections from any selected author
+  const availableCollections = useMemo(() => {
+    if (authorIds.length === 0) return collections
+    const selectedAuthorSet = new Set(authorIds)
+    return collections.filter(
+      (c) => c.author_id && selectedAuthorSet.has(c.author_id),
+    )
+  }, [authorIds, collections])
+
+  // Authors filter: when collections are selected, only show authors of those collections
   const availableAuthors = useMemo(() => {
-    if (!collectionValue) return authors
-    const coll = collections.find((c) => c.id === collectionValue)
-    if (!coll?.author_id) return authors
-    return authors.filter((a) => a.id === coll.author_id)
-  }, [collectionValue, authors, collections])
+    if (collectionIds.length === 0) return authors
+    const colls = collections.filter((c) => collectionIds.includes(c.id))
+    const relevantAuthorIds = new Set(
+      colls.map((c) => c.author_id).filter(Boolean) as string[],
+    )
+    return authors.filter((a) => relevantAuthorIds.has(a.id))
+  }, [collectionIds, authors, collections])
 
   const availableTags = useMemo(() => {
     let rels = tagRelationships
-    if (authorValue) rels = rels.filter((r) => r.authorId === authorValue)
-    if (collectionValue)
-      rels = rels.filter((r) => r.collectionId === collectionValue)
+    if (authorIds.length > 0)
+      rels = rels.filter((r) => r.authorId && authorIds.includes(r.authorId))
+    if (collectionIds.length > 0)
+      rels = rels.filter(
+        (r) => r.collectionId && collectionIds.includes(r.collectionId),
+      )
     const validTagIds = new Set(rels.map((r) => r.tagId))
     return tags.filter((t) => validTagIds.has(t.id))
-  }, [authorValue, collectionValue, tagRelationships, tags])
-
-  function buildParams(extra: Record<string, string> = {}): URLSearchParams {
-    const params = new URLSearchParams()
-    if (searchValue.trim()) params.set('q', searchValue.trim())
-    if (authorValue) params.set('author', authorValue)
-    if (collectionValue) params.set('collection', collectionValue)
-    if (tagValue) params.set('tag', tagValue)
-    if (readValue) params.set('read', readValue)
-    if (favValue) params.set('favorite', favValue)
-    for (const [k, v] of Object.entries(extra)) {
-      if (v) params.set(k, v)
-    }
-    return params
-  }
-
-  function applyFilters() {
-    const params = buildParams()
-    const qs = params.toString()
-    router.push(qs ? `/poems?${qs}` : '/poems')
-  }
+  }, [authorIds, collectionIds, tagRelationships, tags])
 
   function resetFilters() {
-    setSearchValue('')
-    setAuthorValue('')
-    setCollectionValue('')
-    setTagValue('')
-    setReadValue(null)
-    setFavValue(null)
-    router.push('/poems')
+    window.location.href = '/poems'
   }
 
   return (
@@ -116,74 +206,50 @@ export default function PoemFilters({
           type="search"
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
           placeholder="Titre ou contenu du poème…"
           className="block flex-1 rounded border border-stone-300 px-3 py-2 text-sm text-stone-900 focus:border-stone-500 focus:outline-none dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100 dark:placeholder-stone-500"
         />
       </div>
-      <div className="flex flex-wrap gap-2">
-        <select
-          value={authorValue}
-          onChange={(e) => {
-            setAuthorValue(e.target.value)
-            if (e.target.value && collectionValue) {
-              const coll = collections.find((c) => c.id === collectionValue)
-              if (coll && coll.author_id !== e.target.value) {
-                setCollectionValue('')
-                setTagValue('')
-              }
-            }
-          }}
-          className="flex-[3] rounded border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-700 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300"
-        >
-          <option value="">Tous les auteurs</option>
-          {availableAuthors.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={collectionValue}
-          onChange={(e) => {
-            const newVal = e.target.value
-            setCollectionValue(newVal)
-            if (newVal) {
-              const coll = collections.find((c) => c.id === newVal)
-              if (coll?.author_id) setAuthorValue(coll.author_id)
-              setTagValue('')
-            }
-          }}
-          className="flex-[5] rounded border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-700 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300"
-        >
-          <option value="">Toutes les collections</option>
-          {availableCollections.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.title}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={tagValue}
-          onChange={(e) => setTagValue(e.target.value)}
-          className="flex-[2] rounded border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-700 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300"
-        >
-          <option value="">Tous les tags</option>
-          {availableTags.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
-        </select>
+      <div className="flex flex-wrap items-start gap-2">
+        <div className="min-w-[160px] flex-1 basis-[180px]">
+          <TagInput
+            allTags={availableAuthors.map((a) => ({ id: a.id, name: a.name }))}
+            selectedTagIds={authorIds}
+            creatable={false}
+            placeholder="Auteurs…"
+            onChange={navigateAuthor}
+          />
+        </div>
+        <div className="min-w-[180px] flex-[2] basis-[200px]">
+          <TagInput
+            allTags={availableCollections.map((c) => ({
+              id: c.id,
+              name: c.title,
+            }))}
+            selectedTagIds={collectionIds}
+            creatable={false}
+            placeholder="Collections…"
+            onChange={navigateCollection}
+            inputName=""
+          />
+        </div>
+        <div className="min-w-[160px] flex-1 basis-[180px]">
+          <TagInput
+            allTags={availableTags}
+            selectedTagIds={tagIds}
+            creatable={false}
+            placeholder="Tags…"
+            onChange={navigateTag}
+          />
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={() => {
-            const p = buildParams({ random: '1' })
-            router.push(`/poems?${p.toString()}`)
+            const params = new URLSearchParams(window.location.search)
+            params.set('random', '1')
+            router.push(`/poems?${params.toString()}`)
           }}
           className="rounded bg-stone-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-stone-800 dark:bg-stone-600 dark:hover:bg-stone-500"
         >
@@ -191,9 +257,7 @@ export default function PoemFilters({
         </button>
 
         <button
-          onClick={() =>
-            setReadValue((v) => (v === null ? '1' : v === '1' ? '0' : null))
-          }
+          onClick={cycleRead}
           className={`flex items-center gap-1.5 rounded border px-3 py-1.5 text-sm transition-colors ${
             readValue === '1'
               ? 'border-green-300 bg-green-50 text-green-700 dark:border-green-600 dark:bg-green-950 dark:text-green-300'
@@ -219,9 +283,7 @@ export default function PoemFilters({
         </button>
 
         <button
-          onClick={() =>
-            setFavValue((v) => (v === null ? '1' : v === '1' ? '0' : null))
-          }
+          onClick={cycleFav}
           className={`flex items-center gap-1.5 rounded border px-3 py-1.5 text-sm transition-colors ${
             favValue === '1'
               ? 'border-rose-300 bg-rose-50 text-rose-600 dark:border-rose-600 dark:bg-rose-950 dark:text-rose-300'
@@ -240,13 +302,6 @@ export default function PoemFilters({
             <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
           </svg>
           {favValue === '0' ? 'Non favoris' : 'Favoris'}
-        </button>
-
-        <button
-          onClick={applyFilters}
-          className="rounded bg-stone-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-stone-800 dark:bg-stone-600 dark:hover:bg-stone-500"
-        >
-          Filtrer
         </button>
 
         <button

@@ -5,6 +5,11 @@ import PoemFilters from '@/components/poem-filters'
 import StateMessage from '@/components/state-message'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 
+/** Pure alternative to Math.random for picking a random array index. */
+function randomIndex(length: number): number {
+  return Math.floor(Math.random() * length)
+}
+
 interface PoemsSearchParams {
   q?: string
   author?: string
@@ -69,7 +74,9 @@ export default async function PoemsPage({
   const { data: authData } = await supabase.auth.getUser()
   const userId = authData.user?.id ?? null
 
-  // Get poem IDs matching read/favorite status
+  // Determine poem IDs by read/favorite status
+  // Filter poems by read/favorite status.
+  // A poem with no row in user_poem_status is implicitly not-read and not-favorite.
   let statusPoemIds: string[] | null = null
   let excludeStatusIds = false
   const readFilter = filters.read
@@ -82,28 +89,74 @@ export default async function PoemsPage({
       favFilter === '0') &&
     userId
   ) {
-    // For negative filters (read=0), we fetch the positive IDs then exclude them
-    const positiveRead = readFilter === '0' ? '1' : readFilter
-    const positiveFav = favFilter === '0' ? '1' : favFilter
+    // Strategy: fetch IDs matching each condition separately, then combine.
+    // - Positive conditions (read=1, fav=1): include poems matching ALL of these (intersection)
+    // - Negative conditions (read=0, fav=0): exclude poems matching ANY of these (union)
+    // This correctly handles poems with no status row (they're not in any result set).
 
-    let statusQuery = supabase
-      .from('user_poem_status')
-      .select('poem_id')
-      .eq('user_id', userId)
+    const fetchCondition = async (condition: {
+      is_read?: boolean
+      is_favorite?: boolean
+    }) => {
+      let q = supabase
+        .from('user_poem_status')
+        .select('poem_id')
+        .eq('user_id', userId)
+      if (condition.is_read !== undefined)
+        q = q.eq('is_read', condition.is_read)
+      if (condition.is_favorite !== undefined)
+        q = q.eq('is_favorite', condition.is_favorite)
+      const { data } = await q
+      return new Set((data ?? []).map((r) => r.poem_id))
+    }
 
-    const hasPositiveRead = positiveRead === '1'
-    const hasPositiveFav = positiveFav === '1'
+    // Positive conditions: build intersection
+    const positivePromises: ReturnType<typeof fetchCondition>[] = []
+    if (readFilter === '1')
+      positivePromises.push(fetchCondition({ is_read: true }))
+    if (favFilter === '1')
+      positivePromises.push(fetchCondition({ is_favorite: true }))
 
-    if (hasPositiveRead && !hasPositiveFav)
-      statusQuery = statusQuery.eq('is_read', true)
-    else if (hasPositiveFav && !hasPositiveRead)
-      statusQuery = statusQuery.eq('is_favorite', true)
-    else if (hasPositiveRead && hasPositiveFav)
-      statusQuery = statusQuery.eq('is_read', true).eq('is_favorite', true)
+    // Negative conditions: build union to exclude
+    const negativePromises: ReturnType<typeof fetchCondition>[] = []
+    if (readFilter === '0')
+      negativePromises.push(fetchCondition({ is_read: true }))
+    if (favFilter === '0')
+      negativePromises.push(fetchCondition({ is_favorite: true }))
 
-    const { data: statusRows } = await statusQuery
-    statusPoemIds = statusRows?.map((r) => r.poem_id) ?? []
-    excludeStatusIds = readFilter === '0' || favFilter === '0'
+    if (positivePromises.length > 0 && negativePromises.length === 0) {
+      // All positive: intersect
+      const sets = await Promise.all(positivePromises)
+      const result = new Set(sets[0])
+      for (let i = 1; i < sets.length; i++) {
+        for (const id of result) {
+          if (!sets[i].has(id)) result.delete(id)
+        }
+      }
+      statusPoemIds = [...result]
+      excludeStatusIds = false
+    } else if (positivePromises.length === 0 && negativePromises.length > 0) {
+      // All negative: union the positives of what to exclude
+      const sets = await Promise.all(negativePromises)
+      const excluded = new Set(sets.flatMap((s) => [...s]))
+      statusPoemIds = [...excluded]
+      excludeStatusIds = true
+    } else if (positivePromises.length > 0 && negativePromises.length > 0) {
+      // Mixed: intersect positives, subtract the union of negatives
+      const [posSets, negSets] = await Promise.all([
+        Promise.all(positivePromises),
+        Promise.all(negativePromises),
+      ])
+      const positives = new Set(posSets[0])
+      for (let i = 1; i < posSets.length; i++) {
+        for (const id of positives) {
+          if (!posSets[i].has(id)) positives.delete(id)
+        }
+      }
+      const negatives = new Set(negSets.flatMap((s) => [...s]))
+      statusPoemIds = [...positives].filter((id) => !negatives.has(id))
+      excludeStatusIds = false
+    }
   }
 
   // Build the query dynamically
@@ -113,8 +166,22 @@ export default async function PoemsPage({
     const q = filters.q.trim()
     query = query.or(`title.ilike.%${q}%,content.ilike.%${q}%`)
   }
-  if (filters.author) query = query.eq('author_id', filters.author)
-  if (filters.collection) query = query.eq('collection_id', filters.collection)
+  if (filters.author) {
+    const authorList = filters.author.split(',').filter(Boolean)
+    if (authorList.length === 1) {
+      query = query.eq('author_id', authorList[0])
+    } else {
+      query = query.in('author_id', authorList)
+    }
+  }
+  if (filters.collection) {
+    const collectionList = filters.collection.split(',').filter(Boolean)
+    if (collectionList.length === 1) {
+      query = query.eq('collection_id', collectionList[0])
+    } else {
+      query = query.in('collection_id', collectionList)
+    }
+  }
   if (statusPoemIds !== null) {
     if (excludeStatusIds) {
       query = query.not(
@@ -132,14 +199,15 @@ export default async function PoemsPage({
     }
   }
 
-  // Handle tag filter
+  // Handle tag filter — OR logic: poems matching any selected tag
   if (filters.tag) {
-    const { data: poemIds } = await supabase
+    const tagList = filters.tag.split(',').filter(Boolean)
+    const { data: poemTags } = await supabase
       .from('poem_tags')
       .select('poem_id')
-      .eq('tag_id', filters.tag)
+      .in('tag_id', tagList)
 
-    const ids = poemIds?.map((pt) => pt.poem_id) ?? []
+    const ids = [...new Set(poemTags?.map((pt) => pt.poem_id) ?? [])]
     if (ids.length > 0) query = query.in('id', ids)
   }
 
@@ -163,7 +231,7 @@ export default async function PoemsPage({
     authorMap = new Map(fetched?.map((a) => [a.id, a.name]) ?? [])
   }
 
-  // Random poem from filtered set
+  // Random poem: pick from the already-filtered poems array
   let randomPoem: {
     id: string
     title: string
@@ -172,45 +240,12 @@ export default async function PoemsPage({
   } | null = null
   let randomPoemAuthor: string | null = null
 
-  if (showRandom) {
-    let randomId: string | null = null
-
-    // Use RPC when no read/fav filter, fallback to JS random for status filters
-    if (
-      readFilter !== '1' &&
-      readFilter !== '0' &&
-      favFilter !== '1' &&
-      favFilter !== '0'
-    ) {
-      const { data: id } = await supabase.rpc('get_random_poem_id', {
-        p_author_id: filters.author ?? null,
-        p_collection_id: filters.collection ?? null,
-        p_tag_id: filters.tag ?? null,
-      })
-      randomId = id
-    } else if (poems && poems.length > 0) {
-      // eslint-disable-next-line react-hooks/purity
-      randomId = poems[Math.floor(Math.random() * poems.length)].id
-    }
-
-    if (randomId) {
-      const { data: p } = await supabase
-        .from('poems')
-        .select('id, title, content, author_id')
-        .eq('id', randomId)
-        .single()
-      if (p) {
-        randomPoem = p
-        if (p.author_id) {
-          const { data: a } = await supabase
-            .from('authors')
-            .select('name')
-            .eq('id', p.author_id)
-            .single()
-          randomPoemAuthor = a?.name ?? null
-        }
-      }
-    }
+  if (showRandom && poems && poems.length > 0) {
+    const idx = randomIndex(poems.length)
+    randomPoem = poems[idx]
+    randomPoemAuthor = randomPoem.author_id
+      ? (authorMap.get(randomPoem.author_id) ?? null)
+      : null
   }
 
   return (

@@ -29,7 +29,7 @@ Digital library for public-domain poetry (French-first). Next.js 16 + Supabase.
 ## Architecture
 
 - **`src/app/`** — Next.js App Router pages. Root layout forces `dynamic = 'force-dynamic'`. Homepage (`/`) shows daily featured poem via deterministic hash of date. Displays `DismissableBanner` when `?message=` is set (account deletion, etc.). `/account` shows user email and allows account deletion with confirmation. Custom `not-found.tsx` and root `loading.tsx`.
-- **`src/components/`** — Shared UI: `PageShell`, `SiteHeader` (Compte/email/Déconnexion when logged in), `SiteFooter` (legal links), `PoemCard` (list/full variants), `PoemFilters` (cascading filters + search + random), `PoemStatusToggle`, `DismissableBanner` (closable message banner), `StateMessage`, `ConfirmDeleteForm` (client confirm dialog wrapper).
+- **`src/components/`** — Shared UI: `PageShell`, `SiteHeader`, `SiteFooter`, `PoemCard` (list/full variants), `PoemFilters` (multi-select chip filters for author/collection/tag with cascading OR logic), `PoemStatusToggle`, `TagInput` (searchable multi-select tag chips, supports creating new tags via comma key), `DismissableBanner`, `StateMessage`, `ConfirmDeleteForm`.
 - **`src/lib/supabase/`** — Three Supabase client factories (`client.ts` browser, `server.ts` server component, `proxy.ts` route handler proxy) + `env.ts` config helpers.
 - **`src/lib/use-poem-status.ts`** — Hook for read/favorite tracking. Completely disjoint: when logged in, reads/writes Supabase `user_poem_status` only; when logged out, reads/writes localStorage only. No sync between the two.
 - **`src/proxy.ts`** — Next.js 16 proxy, refreshes Supabase auth session.
@@ -44,8 +44,8 @@ Digital library for public-domain poetry (French-first). Next.js 16 + Supabase.
 
 - **Server-first:** All data fetching in async server components. Client components are leaf nodes only.
 - **Whitespace rendering:** Poem content uses `whitespace-pre-wrap` CSS so tabs and verse newlines render correctly.
-- **Cascading filters:** On `/poems`, selecting an author limits the collections and tags dropdowns to relevant options. Selecting a collection auto-selects its author and limits tags. Read/favorite toggle buttons filter the poem list to only show poems marked as read or favorited by the current user. All relationship data fetched server-side and filtered client-side via `useMemo`.
-- **Random poem:** Accessed via `/poems?random=1` (uses `get_random_poem_id` RPC with current filters). Displayed as a full PoemCard with read/favorite toggles.
+- **Cascading chip filters:** On `/poems`, all three filters (author, collection, tag) are multi-select chip inputs using `TagInput`. Selecting authors unions their available collections; selecting collections filters authors accordingly. Tags cascade from both author and collection selections. All filters use OR logic (`?author=id1,id2&collection=id3`). Read/favorite toggle buttons filter the poem list by status. All relationship data fetched server-side and filtered client-side via `useMemo`.
+- **Random poem:** Accessed via `/poems?random=1`. Picks randomly from the already-filtered poem array (respects all active filters: search, author, collection, tag, read/favorite status). Displayed as a full PoemCard with read/favorite toggles.
 - **Supabase queries:** No `Database` generic on `createServerClient` — type inference from plain `.select('col1, col2')` works without it.
 - **Env vars:** `NEXT_PUBLIC_*` for browser-safe vars. `SITE_URL` for production URL (auth redirects, canonical, sitemap). `GITHUB_USERNAME` for /about page links. `getSupabaseConfig()` returns null during build/static gen.
 - **Formatting:** Prettier 3 with `semi: false`, `singleQuote: true`, `tabWidth: 2`, `trailingComma: all`, `prettier-plugin-tailwindcss`.

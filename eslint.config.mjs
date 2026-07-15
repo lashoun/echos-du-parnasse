@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     'out/**',
     'build/**',
     'next-env.d.ts',
+    // Plain Node.js scripts that use CommonJS require()
+    'scripts/convert-latex-sonnets.js',
   ]),
 ])
 

@@ -11,6 +11,7 @@ export async function createSupabaseServerClient() {
       getAll() {
         return cookieStore.getAll()
       },
+      // _headers is required by Supabase's CookieOptions type but unused here
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       setAll(cookiesToSet, _) {
         try {

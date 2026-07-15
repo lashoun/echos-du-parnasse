@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import TagInput from '@/components/tag-input'
 import { updatePoem } from '../../actions'
 
 export default async function EditPoemPage({
@@ -173,27 +174,11 @@ export default async function EditPoemPage({
           <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
             Tags
           </label>
-          <div className="mt-1 flex flex-wrap gap-2">
-            {tags?.length === 0 && (
-              <p className="text-sm text-stone-500">
-                Aucun tag. Créez-en d&apos;abord dans la section Tags.
-              </p>
-            )}
-            {tags?.map((tag) => (
-              <label
-                key={tag.id}
-                className="flex cursor-pointer items-center gap-1.5 rounded border border-stone-200 px-3 py-1.5 text-sm hover:bg-stone-50 dark:border-stone-600 dark:hover:bg-stone-700"
-              >
-                <input
-                  type="checkbox"
-                  name="tag_ids"
-                  value={tag.id}
-                  defaultChecked={selectedTagIds.has(tag.id)}
-                  className="h-3.5 w-3.5"
-                />
-                {tag.name}
-              </label>
-            ))}
+          <div className="mt-1">
+            <TagInput
+              allTags={tags ?? []}
+              selectedTagIds={Array.from(selectedTagIds)}
+            />
           </div>
         </div>
 
