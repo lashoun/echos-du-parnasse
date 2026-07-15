@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import React from 'react'
 import PageShell from '@/components/page-shell'
 import PoemCard from '@/components/poem-card'
 import PoemFilters from '@/components/poem-filters'
@@ -10,6 +11,22 @@ function randomIndex(length: number): number {
   return Math.floor(Math.random() * length)
 }
 
+function buildPageUrl(
+  filters: PoemsSearchParams,
+  page: number,
+): string {
+  const params = new URLSearchParams()
+  if (filters.q) params.set('q', filters.q)
+  if (filters.author) params.set('author', filters.author)
+  if (filters.collection) params.set('collection', filters.collection)
+  if (filters.tag) params.set('tag', filters.tag)
+  if (filters.read) params.set('read', filters.read)
+  if (filters.favorite) params.set('favorite', filters.favorite)
+  if (page > 1) params.set('page', String(page))
+  const qs = params.toString()
+  return qs ? `/poems?${qs}` : '/poems'
+}
+
 interface PoemsSearchParams {
   q?: string
   author?: string
@@ -18,6 +35,7 @@ interface PoemsSearchParams {
   random?: string
   read?: string
   favorite?: string
+  page?: string
 }
 
 export default async function PoemsPage({
@@ -27,6 +45,8 @@ export default async function PoemsPage({
 }) {
   const filters = await searchParams
   const showRandom = filters.random === '1'
+  const currentPage = Math.max(1, Number(filters.page) || 1)
+  const PAGE_SIZE = 50
   const supabase = await createSupabaseServerClient()
 
   // Fetch filter options + relationship data
@@ -74,7 +94,6 @@ export default async function PoemsPage({
   const { data: authData } = await supabase.auth.getUser()
   const userId = authData.user?.id ?? null
 
-  // Determine poem IDs by read/favorite status
   // Filter poems by read/favorite status.
   // A poem with no row in user_poem_status is implicitly not-read and not-favorite.
   let statusPoemIds: string[] | null = null
@@ -159,7 +178,60 @@ export default async function PoemsPage({
     }
   }
 
-  // Build the query dynamically
+  // Build a count query (same filters, no pagination)
+  let countQuery = supabase.from('poems').select('*', { count: 'exact', head: true })
+
+  if (filters.q && filters.q.trim()) {
+    const q = filters.q.trim()
+    countQuery = countQuery.or(`title.ilike.%${q}%,content.ilike.%${q}%`)
+  }
+  if (filters.author) {
+    const authorList = filters.author.split(',').filter(Boolean)
+    if (authorList.length === 1) {
+      countQuery = countQuery.eq('author_id', authorList[0])
+    } else {
+      countQuery = countQuery.in('author_id', authorList)
+    }
+  }
+  if (filters.collection) {
+    const collectionList = filters.collection.split(',').filter(Boolean)
+    if (collectionList.length === 1) {
+      countQuery = countQuery.eq('collection_id', collectionList[0])
+    } else {
+      countQuery = countQuery.in('collection_id', collectionList)
+    }
+  }
+  if (statusPoemIds !== null) {
+    if (excludeStatusIds) {
+      countQuery = countQuery.not(
+        'id',
+        'in',
+        `(${statusPoemIds.length > 0 ? statusPoemIds.join(',') : '00000000-0000-0000-0000-000000000000'})`,
+      )
+    } else {
+      countQuery = countQuery.in(
+        'id',
+        statusPoemIds.length > 0
+          ? statusPoemIds
+          : ['00000000-0000-0000-0000-000000000000'],
+      )
+    }
+  }
+  if (filters.tag) {
+    const tagList = filters.tag.split(',').filter(Boolean)
+    const { data: poemTags } = await supabase
+      .from('poem_tags')
+      .select('poem_id')
+      .in('tag_id', tagList)
+
+    const ids = [...new Set(poemTags?.map((pt) => pt.poem_id) ?? [])]
+    if (ids.length > 0) countQuery = countQuery.in('id', ids)
+  }
+
+  const { count: totalCount } = await countQuery
+  const totalPages = Math.ceil((totalCount ?? 0) / PAGE_SIZE)
+
+  // Fetch the current page, with the same filters applied
   let query = supabase.from('poems').select('id, title, content, author_id')
 
   if (filters.q && filters.q.trim()) {
@@ -211,7 +283,10 @@ export default async function PoemsPage({
     if (ids.length > 0) query = query.in('id', ids)
   }
 
-  const { data: poems } = await query.order('title', { ascending: true })
+  const offset = (currentPage - 1) * PAGE_SIZE
+  const { data: poems } = await query
+    .order('title', { ascending: true })
+    .range(offset, offset + PAGE_SIZE - 1)
 
   // Build author map
   const authorIds = [
@@ -294,8 +369,11 @@ export default async function PoemsPage({
         <>
           {poems && poems.length > 0 && (
             <p className="mb-4 text-sm text-stone-500 dark:text-stone-400">
-              {poems.length} poème{poems.length > 1 ? 's' : ''}
+              {totalCount ?? 0} poème{(totalCount ?? 0) > 1 ? 's' : ''}
               {filters.q ? ` pour « ${filters.q} »` : ''}
+              {' ('}
+              {offset + 1}–{offset + poems.length}
+              {' affichés)'}
             </p>
           )}
 
@@ -328,7 +406,55 @@ export default async function PoemsPage({
         </>
       )}
 
-      <nav className="mt-8">
+      {/* Pagination */}
+      {!showRandom && totalPages > 1 && (
+        <nav className="mt-6 flex items-center justify-center gap-1">
+          {currentPage > 1 && (
+            <Link
+              href={buildPageUrl(filters, currentPage - 1)}
+              className="rounded border border-stone-300 px-3 py-1.5 text-sm text-stone-600 hover:bg-stone-100 dark:border-stone-600 dark:text-stone-400 dark:hover:bg-stone-800"
+            >
+              ← Précédente
+            </Link>
+          )}
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter(
+              (p) =>
+                p === 1 ||
+                p === totalPages ||
+                Math.abs(p - currentPage) <= 2,
+            )
+            .map((p, idx, arr) => (
+              <React.Fragment key={p}>
+                {idx > 0 && arr[idx - 1] !== p - 1 && (
+                  <span className="px-1 text-stone-400">…</span>
+                )}
+                {p === currentPage ? (
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded bg-stone-700 text-sm font-medium text-white dark:bg-stone-500">
+                    {p}
+                  </span>
+                ) : (
+                  <Link
+                    href={buildPageUrl(filters, p)}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded text-sm text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800"
+                  >
+                    {p}
+                  </Link>
+                )}
+              </React.Fragment>
+            ))}
+          {currentPage < totalPages && (
+            <Link
+              href={buildPageUrl(filters, currentPage + 1)}
+              className="rounded border border-stone-300 px-3 py-1.5 text-sm text-stone-600 hover:bg-stone-100 dark:border-stone-600 dark:text-stone-400 dark:hover:bg-stone-800"
+            >
+              Suivante →
+            </Link>
+          )}
+        </nav>
+      )}
+
+      <nav className="mt-6">
         <Link
           href="/"
           className="text-sm font-medium text-stone-600 underline underline-offset-2 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-200"
