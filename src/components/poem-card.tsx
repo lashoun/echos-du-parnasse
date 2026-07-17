@@ -98,7 +98,7 @@ export default function PoemCard({ poem, variant = 'list' }: PoemCardProps) {
           </div>
           <StatusIcons poemId={poem.id} />
         </div>
-        <div className="mt-4 leading-relaxed whitespace-pre-wrap text-stone-700 dark:text-stone-300">
+        <div className="poem-text mt-4 whitespace-pre-wrap text-stone-700 dark:text-stone-300">
           {poem.content}
         </div>
       </article>

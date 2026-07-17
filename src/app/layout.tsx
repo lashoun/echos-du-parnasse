@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Geist, Literata, Crimson_Pro, Zilla_Slab } from 'next/font/google'
+import { ThemeProvider } from 'next-themes'
 import SiteHeader from '@/components/site-header'
 import SiteFooter from '@/components/site-footer'
+import { PoemFontProvider } from '@/lib/use-preferences'
 import './globals.css'
 
 export const dynamic = 'force-dynamic'
@@ -11,15 +13,29 @@ const geistSans = Geist({
   subsets: ['latin'],
 })
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const literata = Literata({
+  variable: '--font-literata',
+  subsets: ['latin'],
+})
+
+const crimsonPro = Crimson_Pro({
+  variable: '--font-crimson-pro',
+  subsets: ['latin'],
+})
+
+const zillaSlab = Zilla_Slab({
+  variable: '--font-zilla-slab',
+  weight: ['300', '400', '500', '600', '700'],
   subsets: ['latin'],
 })
 
 const siteUrl = process.env.SITE_URL ?? 'http://localhost:3000'
 
 export const viewport: Viewport = {
-  themeColor: '#f5f5f4',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f5f5f4' },
+    { media: '(prefers-color-scheme: dark)', color: '#1c1917' },
+  ],
 }
 
 export const metadata: Metadata = {
@@ -46,15 +62,27 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const fontVariables = `${geistSans.variable} ${literata.variable} ${crimsonPro.variable} ${zillaSlab.variable}`
+
   return (
     <html
       lang="fr"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
+      className={`${fontVariables} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <SiteHeader />
-        {children}
-        <SiteFooter />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          storageKey="parnasse:theme"
+        >
+          <PoemFontProvider>
+            <SiteHeader />
+            {children}
+            <SiteFooter />
+          </PoemFontProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

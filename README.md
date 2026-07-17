@@ -87,13 +87,16 @@ src/
 │   ├── page-shell.tsx    Page layout wrapper
 │   ├── site-footer.tsx   Footer with legal links
 │   ├── site-header.tsx   Auth-aware navigation
-│   └── state-message.tsx Empty/error state display
+│   ├── state-message.tsx Empty/error state display
+│   ├── display-preferences-form.tsx  Theme + poem font selectors
+│   └── confirm-delete-form.tsx  Client-side confirm dialog for delete buttons
 ├── lib/
 │   ├── supabase/
 │   │   ├── env.ts        Lazy env-var guard
 │   │   ├── server.ts     Server client (RSC, route handlers)
 │   │   └── client.ts     Browser client (client components)
 │   ├── use-poem-status.ts  Disjoint read/favorite hook (Supabase when logged in, localStorage when not)
+│   ├── use-preferences.ts  Display preferences hook (theme + poem font via next-themes)
 │   └── utils.ts          Shared helpers
 ├── proxy.ts              Supabase auth session refresh
 ├── lib/admin.ts          Admin auth helpers (getCurrentUser, requireAdmin)
@@ -131,7 +134,7 @@ supabase/
 | `/about`                | Project info, features, sources, contact                                                 |
 | `/privacy`              | Privacy policy (email, localStorage, cookies)                                            |
 | `/legal`                | Mentions légales (editor, hosting, license)                                              |
-| `/account`              | Account settings & account deletion                                                      |
+| `/account`              | Account settings, display preferences (theme, poem font) & account deletion              |
 | `/login`                | Email/password login & signup                                                            |
 | `/auth/callback`        | OAuth code exchange handler                                                              |
 | `/auth/signout`         | POST signout handler                                                                     |
@@ -182,4 +185,4 @@ GNU General Public License v3.0. See [LICENSE](./LICENSE).
 
 - No author listing page (only detail page via `/authors/[id]`)
 - No test suite
-- Dark mode uses `prefers-color-scheme` media query (no manual toggle)
+- User-selectable poem font (Geist Sans, Literata, Crimson Pro, Zilla Slab)

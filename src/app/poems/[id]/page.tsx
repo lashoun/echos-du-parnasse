@@ -116,7 +116,7 @@ export default async function PoemDetailPage({
           </div>
         </header>
 
-        <div className="leading-relaxed whitespace-pre-wrap text-stone-700 dark:text-stone-300">
+        <div className="poem-text whitespace-pre-wrap text-stone-700 dark:text-stone-300">
           {poem.content}
         </div>
       </article>

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import PageShell from '@/components/page-shell'
+import DisplayPreferencesForm from '@/components/display-preferences-form'
 import { deleteAccount } from './actions'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
@@ -46,6 +47,8 @@ export default async function AccountPage({
             {user.email}
           </p>
         </section>
+
+        <DisplayPreferencesForm />
 
         <section className="border-t border-stone-200 pt-6 dark:border-stone-700">
           <h2 className="font-semibold text-red-600 dark:text-red-400">
