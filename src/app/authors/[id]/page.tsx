@@ -86,7 +86,7 @@ export default async function AuthorDetailPage({
 
       {/* Poems */}
       <section>
-        <h2 className="mb-3 text-lg font-semibold text-stone-800">
+        <h2 className="mb-3 text-lg font-semibold text-stone-800 dark:text-stone-200">
           Poèmes
           {poems && (
             <span className="ml-1 font-normal text-stone-400 dark:text-stone-500">

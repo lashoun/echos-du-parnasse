@@ -51,10 +51,14 @@ export default async function CollectionDetailPage({
             {collection.title}
           </h1>
           {authorName && (
-            <p className="mt-1 text-sm text-stone-500">{authorName}</p>
+            <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+              {authorName}
+            </p>
           )}
           {collection.year && (
-            <p className="text-sm text-stone-400">{collection.year}</p>
+            <p className="text-sm text-stone-400 dark:text-stone-500">
+              {collection.year}
+            </p>
           )}
           {collection.description && (
             <p className="mt-2 text-stone-600 dark:text-stone-300">
@@ -69,7 +73,7 @@ export default async function CollectionDetailPage({
         <nav className="mt-8">
           <Link
             href="/collections"
-            className="text-sm font-medium text-stone-600 underline underline-offset-2 hover:text-stone-900"
+            className="text-sm font-medium text-stone-600 underline underline-offset-2 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-200"
           >
             ← Retour aux collections
           </Link>
@@ -104,16 +108,16 @@ export default async function CollectionDetailPage({
         {poems.map((poem, index) => (
           <article
             key={poem.id}
-            className="rounded-lg border border-stone-200 bg-white p-4 transition-colors hover:border-stone-400"
+            className="rounded-lg border border-stone-200 bg-white p-4 transition-colors hover:border-stone-400 dark:border-stone-700 dark:bg-stone-800 dark:hover:border-stone-500"
           >
             <Link href={`/poems/${poem.id}`}>
-              <h2 className="font-medium text-stone-900">
+              <h2 className="font-medium text-stone-900 dark:text-stone-100">
                 {poem.position_in_collection != null
                   ? `${poem.position_in_collection}. `
                   : `${index + 1}. `}
                 {poem.title}
               </h2>
-              <p className="mt-2 text-sm leading-relaxed text-stone-600">
+              <p className="mt-2 text-sm leading-relaxed text-stone-600 dark:text-stone-400">
                 {poem.content.length > 150
                   ? poem.content.slice(0, 150).trimEnd() + '…'
                   : poem.content}

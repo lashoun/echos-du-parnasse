@@ -119,29 +119,29 @@ supabase/
 
 ## Routes
 
-| Path                    | Description                                     |
-| ----------------------- | ----------------------------------------------- |
-| `/`                     | Homepage — daily featured poem, nav links       |
+| Path                    | Description                                                                              |
+| ----------------------- | ---------------------------------------------------------------------------------------- |
+| `/`                     | Homepage — daily featured poem, nav links                                                |
 | `/poems`                | Browse, search & filter all poems (multi-select chips, pagination 50/page) + random poem |
-| `/poems/[id]`           | Poem detail + prev/next nav                     |
-| `/collections`          | Collection listing                              |
-| `/collections/[id]`     | Collection detail with ordered poems            |
-| `/tags/[id]`            | Poems by tag                                    |
-| `/authors/[id]`         | Author detail + their poems/collections         |
-| `/about`                | Project info, features, sources, contact        |
-| `/privacy`              | Privacy policy (email, localStorage, cookies)   |
-| `/legal`                | Mentions légales (editor, hosting, license)     |
-| `/account`              | Account settings & account deletion             |
-| `/login`                | Email/password login & signup                   |
-| `/auth/callback`        | OAuth code exchange handler                     |
-| `/auth/signout`         | POST signout handler                            |
-| `/auth/auth-code-error` | OAuth error display                             |
-| `/admin`                | Admin dashboard (requires admin)                |
-| `/admin/authors`        | Admin: list, create, edit, delete authors       |
-| `/admin/collections`    | Admin: list, create, edit, delete collections   |
-| `/admin/poems`          | Admin: list, create, edit, delete poems + tags  |
-| `/admin/tags`           | Admin: list, create, delete tags                |
-| `/admin/admins`         | Admin: manage other administrators              |
+| `/poems/[id]`           | Poem detail + prev/next nav                                                              |
+| `/collections`          | Collection listing                                                                       |
+| `/collections/[id]`     | Collection detail with ordered poems                                                     |
+| `/tags/[id]`            | Poems by tag                                                                             |
+| `/authors/[id]`         | Author detail + their poems/collections                                                  |
+| `/about`                | Project info, features, sources, contact                                                 |
+| `/privacy`              | Privacy policy (email, localStorage, cookies)                                            |
+| `/legal`                | Mentions légales (editor, hosting, license)                                              |
+| `/account`              | Account settings & account deletion                                                      |
+| `/login`                | Email/password login & signup                                                            |
+| `/auth/callback`        | OAuth code exchange handler                                                              |
+| `/auth/signout`         | POST signout handler                                                                     |
+| `/auth/auth-code-error` | OAuth error display                                                                      |
+| `/admin`                | Admin dashboard (requires admin)                                                         |
+| `/admin/authors`        | Admin: list, create, edit, delete authors                                                |
+| `/admin/collections`    | Admin: list, create, edit, delete collections                                            |
+| `/admin/poems`          | Admin: list, create, edit, delete poems + tags                                           |
+| `/admin/tags`           | Admin: list, create, delete tags                                                         |
+| `/admin/admins`         | Admin: manage other administrators                                                       |
 
 ## Data Model
 

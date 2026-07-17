@@ -34,7 +34,9 @@ export default async function TagDetailPage({
     return (
       <PageShell>
         <header className="mb-8">
-          <h1 className="text-2xl font-bold text-stone-900">{tag.name}</h1>
+          <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
+            {tag.name}
+          </h1>
         </header>
         <StateMessage
           title="Aucun poème"
@@ -43,7 +45,7 @@ export default async function TagDetailPage({
         <nav className="mt-8">
           <Link
             href="/"
-            className="text-sm font-medium text-stone-600 underline underline-offset-2 hover:text-stone-900"
+            className="text-sm font-medium text-stone-600 underline underline-offset-2 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-200"
           >
             ← Retour à l&apos;accueil
           </Link>
@@ -72,7 +74,7 @@ export default async function TagDetailPage({
     <PageShell>
       <header className="mb-8">
         <h1 className="text-2xl font-bold text-stone-900">{tag.name}</h1>
-        <p className="mt-1 text-sm text-stone-500">
+        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
           {poems?.length ?? 0} poème{(poems?.length ?? 0) > 1 ? 's' : ''}
         </p>
       </header>
