@@ -124,12 +124,13 @@ export default function PoemFilters({
     navigateRef.current = navigate
   }, [navigate])
 
-  // Navigate when debounced search changes
+  // Navigate when debounced search changes (skip if URL has ?random=1)
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false
       return
     }
+    if (window.location.search.includes('random=1')) return
     navigateRef.current({ searchValue: debouncedSearch })
   }, [debouncedSearch])
 
