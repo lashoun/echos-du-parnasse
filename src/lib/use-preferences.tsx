@@ -49,15 +49,15 @@ export function PoemFontProvider({ children }: { children: React.ReactNode }) {
     }
     const scaleMap: Record<string, string> = {
       sans: '1',
-      crimson: '1.175',
-      serif: '1',
-      slab: '1.1',
+      crimson: '1.1',
+      serif: '0.95',
+      slab: '1.05',
     }
     const leadingMap: Record<string, string> = {
       sans: '1',
       crimson: '0.85',
       serif: '0.995',
-      slab: '0.9',
+      slab: '0.925',
     }
     const root = document.documentElement
     root.style.setProperty('--font-poem', fontMap[poemFont] ?? fontMap.sans)
