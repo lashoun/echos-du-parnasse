@@ -42,5 +42,7 @@ yarn-error.log*
 /coverage
 *.pem
 
-# ── Testing ───────────────────────────────────────────────
-data/latex
+# ── Data ──────────────────────────────────────────────────
+# Exclude all data subfolders except data/json
+/data/*
+!/data/json
