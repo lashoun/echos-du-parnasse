@@ -98,14 +98,35 @@ function parseFile(filePath, collectionName) {
   if (currentSegment) segments.push(currentSegment)
 
   for (const seg of segments) {
-    const contentLines = normalizeLines(seg.lines)
+    // Preserve stanza structure: \u00a0 lines mark stanza boundaries.
+    // Single blank lines between verses become \n, stanza breaks become \n\n.
+    const contentLines = seg.lines.filter((l) => l.trim() !== '\u00a0')
     if (contentLines.length === 0) continue
+
+    // Remove leading blank lines
     while (contentLines.length > 0 && contentLines[0].trim() === '') contentLines.shift()
     if (contentLines.length === 0) continue
 
+    // Rebuild: \n between consecutive blank lines marks a stanza break,
+    // a single blank between text lines is a verse break.
+    // Since pandoc puts \n\n between every verse, consecutive blanks
+    // only occur at stanza breaks (where the \u00a0 was removed).
+    // So: double blank → \n\n, single blank → \n
+    const result = []
+    let consecutiveBlanks = 0
+    for (const l of contentLines) {
+      if (l.trim() === '') {
+        consecutiveBlanks++
+      } else {
+        if (consecutiveBlanks > 1) result.push('')
+        result.push(l)
+        consecutiveBlanks = 0
+      }
+    }
+
     poems.push({
       title: seg.marker,
-      content: contentLines.join('\n'),
+      content: result.join('\n'),
       language: 'fr',
       collection: collectionName,
     })

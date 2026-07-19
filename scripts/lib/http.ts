@@ -39,9 +39,7 @@ async function apiFetch(
       await sleep(2_000 * attempt)
       continue
     }
-    throw new Error(
-      `API error: ${response.status} ${response.statusText}`,
-    )
+    throw new Error(`API error: ${response.status} ${response.statusText}`)
   }
   throw new Error('Max retries exceeded')
 }

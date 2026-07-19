@@ -81,7 +81,9 @@ async function getCategoryPages(categoryTitle: string): Promise<PageInfo[]> {
     }
     if (cmcontinue) params.cmcontinue = cmcontinue
 
-    const data = await apiFetch(apiUrl(params), USER_AGENT).then((r) => r.json())
+    const data = await apiFetch(apiUrl(params), USER_AGENT).then((r) =>
+      r.json(),
+    )
     const members = (data.query?.categorymembers ?? []) as PageInfo[]
     for (const page of members) {
       if (page.title && page.pageid) pages.push(page)
@@ -111,7 +113,9 @@ async function getCollectionSubpages(
     }
     if (offset) params.psoffset = offset
 
-    const data = await apiFetch(apiUrl(params), USER_AGENT).then((r) => r.json())
+    const data = await apiFetch(apiUrl(params), USER_AGENT).then((r) =>
+      r.json(),
+    )
     const results = (data.query?.prefixsearch ?? []) as PageInfo[]
     for (const page of results) {
       if (page.title && page.pageid) pages.push(page)

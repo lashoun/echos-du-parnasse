@@ -91,6 +91,15 @@ export async function deleteAuthorAction(formData: FormData) {
 
   const supabase = await createSupabaseServerClient()
 
+  // Delete associated collections first
+  const { error: collError } = await supabase
+    .from('collections')
+    .delete()
+    .eq('author_id', authorId)
+  if (collError) {
+    redirect('/admin/authors?error=' + encodeURIComponent(collError.message))
+  }
+
   const { error } = await supabase.from('authors').delete().eq('id', authorId)
 
   if (error) {
@@ -98,5 +107,6 @@ export async function deleteAuthorAction(formData: FormData) {
   }
 
   revalidatePath('/admin/authors')
+  revalidatePath('/admin/collections')
   redirect('/admin/authors?message=Auteur supprimé')
 }

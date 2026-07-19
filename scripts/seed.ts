@@ -386,8 +386,12 @@ async function main() {
 
   if (args.reset) {
     // Safety confirmation for production database
-    console.log('⚠️  WARNING: This will DELETE ALL DATA and re-seed from scratch!')
-    console.log('    This should only be done in a controlled migration scenario.')
+    console.log(
+      '⚠️  WARNING: This will DELETE ALL DATA and re-seed from scratch!',
+    )
+    console.log(
+      '    This should only be done in a controlled migration scenario.',
+    )
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
