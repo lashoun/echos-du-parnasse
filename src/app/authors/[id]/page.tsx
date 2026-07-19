@@ -4,6 +4,7 @@ import PageShell from '@/components/page-shell'
 import StateMessage from '@/components/state-message'
 import PoemCard from '@/components/poem-card'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { poemSortKey } from '@/lib/utils'
 
 export default async function AuthorDetailPage({
   params,
@@ -23,11 +24,19 @@ export default async function AuthorDetailPage({
   if (!author) notFound()
 
   // Fetch poems by this author
-  const { data: poems } = await supabase
+  const { data: rawPoems } = await supabase
     .from('poems')
-    .select('id, title, content')
+    .select('id, title, content, collection_id')
     .eq('author_id', id)
-    .order('title', { ascending: true })
+
+  // Sort by collection first, then by Roman-numeral-aware title
+  const poems = (rawPoems ?? []).sort((a, b) => {
+    const ca = a.collection_id ?? ''
+    const cb = b.collection_id ?? ''
+    if (ca < cb) return -1
+    if (ca > cb) return 1
+    return poemSortKey(a.title).localeCompare(poemSortKey(b.title))
+  })
 
   // Fetch collections by this author
   const { data: collections } = await supabase

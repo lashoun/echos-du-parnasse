@@ -4,6 +4,7 @@ import PageShell from '@/components/page-shell'
 import StateMessage from '@/components/state-message'
 import PoemCard from '@/components/poem-card'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { poemSortKey } from '@/lib/utils'
 
 export default async function TagDetailPage({
   params,
@@ -54,21 +55,35 @@ export default async function TagDetailPage({
     )
   }
 
-  const { data: poems } = await supabase
+  const { data: rawPoems } = await supabase
     .from('poems')
-    .select('id, title, content, author_id')
+    .select('id, title, content, author_id, collection_id')
     .in('id', poemIds)
-    .order('title', { ascending: true })
 
   // Fetch author names
-  const authorIds = [
-    ...new Set(poems?.map((p) => p.author_id).filter(Boolean) as string[]),
+  const allAuthorIds = [
+    ...new Set(rawPoems?.map((p) => p.author_id).filter(Boolean) as string[]),
   ]
-  const { data: authors } = authorIds.length
-    ? await supabase.from('authors').select('id, name').in('id', authorIds)
+  const { data: authors } = allAuthorIds.length
+    ? await supabase.from('authors').select('id, name').in('id', allAuthorIds)
     : { data: [] }
 
-  const authorMap = new Map(authors?.map((a) => [a.id, a.name]) ?? [])
+  const authorNames = new Map(authors?.map((a) => [a.id, a.name]) ?? [])
+
+  // Sort by author name, then collection, then Roman-numeral-aware title
+  const poems = (rawPoems ?? []).sort((a, b) => {
+    const aa = authorNames.get(a.author_id ?? '') ?? ''
+    const ab = authorNames.get(b.author_id ?? '') ?? ''
+    if (aa < ab) return -1
+    if (aa > ab) return 1
+    const ca = a.collection_id ?? ''
+    const cb = b.collection_id ?? ''
+    if (ca < cb) return -1
+    if (ca > cb) return 1
+    return poemSortKey(a.title).localeCompare(poemSortKey(b.title))
+  })
+
+  const authorMap = authorNames
 
   return (
     <PageShell>
