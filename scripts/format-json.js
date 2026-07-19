@@ -4,69 +4,21 @@
  *   - French typography normalization (non-breaking spaces before punctuation)
  *   - Auto-tagging sonnets (exactly 14 non-empty verses → tag "sonnet")
  *   - Title disambiguation:
- *       a) If title is an Arabic numeral → convert to Roman numeral + append first verse
+ *       a) If title is an Arabic or Roman numeral → normalize to Roman + append first verse
  *       b) If any title is duplicated → append first verse to ALL duplicates
  *
  * Usage: node scripts/format-json.js <path-to-json>
- *   node scripts/format-json.js data/json/du-bellay.json
  *
- * The file is edited in-place. Idempotent — safe to run multiple times.
+ * The file is edited in-place. Idempotent.
  */
 
 const fs = require('fs')
-
-// ── Roman numeral converter ───────────────────────────────
-
-function toRoman(n) {
-  const map = [
-    [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'],
-    [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'],
-    [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I'],
-  ]
-  let result = ''
-  for (const [val, sym] of map) {
-    while (n >= val) {
-      result += sym
-      n -= val
-    }
-  }
-  return result
-}
-
-// ── French typography ─────────────────────────────────────
-
-function normalizeTypography(text) {
-  text = text.replace(/(\S)[ \u00A0\u202F]*([!?;])/g, '$1\u202F$2')
-  text = text.replace(/(\S)[ \u00A0\u202F]*(:)/g, '$1\u00A0$2')
-  return text
-}
-
-/** Return the first verse (first non-empty line) of a poem. */
-function firstVerse(content) {
-  for (const line of content.split('\n')) {
-    const t = line.trim()
-    if (t) {
-      let result = t.replace(/^[«""''\s]+|[»""''\s]+$/g, '').substring(0, 60).trimEnd()
-      // If it ends with a non-sentence-ending punctuation, replace it with …
-      const last = result[result.length - 1]
-      if (last === '.' || last === '!' || last === '?') {
-        // Keep sentence-ending punctuation as-is
-      } else if (/[\.!?,;: ]+$/.test(result)) {
-        result = result.replace(/[\.!?,;: ]+$/, '…')
-      } else {
-        // No punctuation at all – append ellipsis
-        result += '…'
-      }
-      return result
-    }
-  }
-  return null
-}
-
-/** Return the number of non-empty lines (verses) in a poem's content. */
-function countVerses(content) {
-  return content.split('\n').filter((l) => l.trim() !== '').length
-}
+const {
+  normalizeTypography,
+  firstVerse,
+  countVerses,
+  toRoman,
+} = require('./lib/poem-utils')
 
 /** Check if a title looks like a plain Arabic or Roman number (e.g. "1", "I.", "XV.") */
 const NUMBER_RE = /^(\d+)\.?$/
@@ -88,7 +40,7 @@ if (!Array.isArray(data.poems)) {
   process.exit(1)
 }
 
-// Phase 1: typography normalization + sonnet tagging
+// Phase 1: typography + sonnet tagging
 let changed = false
 let tagged = 0
 let sonnetCount = 0
@@ -106,6 +58,7 @@ for (const poem of data.poems) {
   const verses = countVerses(poem.content)
   if (verses === 14) sonnetCount++
   else nonSonnetCount++
+
   if (verses === 14) {
     if (!poem.tags?.includes('sonnet')) {
       poem.tags = [...(poem.tags ?? []), 'sonnet']
@@ -125,7 +78,6 @@ for (const poem of data.poems) {
 }
 
 // Phase 2: title disambiguation
-// Build a map of title → indices
 const titleIndex = new Map()
 for (let i = 0; i < data.poems.length; i++) {
   const t = data.poems[i].title
@@ -157,14 +109,12 @@ for (const [title, indices] of titleIndex) {
       }
       poem.title = `${prefix}. (${fv})`
     } else {
-      // Duplicate title — append first verse in parentheses
       poem.title = `${title} (${fv})`
     }
     changed = true
   }
 }
 
-// Report
 if (changed) {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8')
   console.log(`✅ ${filePath} formatted`)

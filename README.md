@@ -104,9 +104,14 @@ src/
 │   └── confirm-delete-form.tsx  Client-side confirm dialog for delete buttons
 └── types/database.ts     Schema types
 scripts/
-├── seed.ts               Poem seeder (reads JSON files from data/)
-├── scrape-wikisource.ts   Wikisource scraper
-└── convert-latex-sonnets.js  LaTeX sonnet converter
+├── lib/
+│   ├── poem-utils.js       Shared poem text utilities (typography, stanzas, verse helpers)
+│   └── http.ts             HTTP helpers (sleep, apiFetch with retry)
+├── seed.ts                 Poem seeder (reads JSON files from data/)
+├── scrape-wikisource.ts    Wikisource scraper
+├── convert-latex-sonnets.js  LaTeX sonnet converter
+├── parse-du-bellay.js      Joachim du Bellay EPUB → JSON parser
+└── format-json.js          JSON formatter (typography, sonnet tagging, title disambiguation)
 data/
 ├── sample-poems.json      Curated sample poems (Baudelaire, Rimbaud, Verlaine)
 ├── baudelaire.json        Scraped poems from Wikisource

@@ -39,7 +39,8 @@ Digital library for public-domain poetry (French-first). Next.js 16 + Supabase.
 - **`src/app/robots.ts` + `src/app/sitemap.ts`** — robots.txt and sitemap generation. Sitemap fetches all poems, collections, authors, tags dynamically.
 - **`scripts/`** — Data ingestion pipeline:
   - **Source-specific parsers** per author/source: `convert-latex-sonnets.js` (LaTeX → JSON), `scrape-wikisource.ts` (Wikisource → JSON), `parse-du-bellay.js` (EPUB → TXT → JSON).
-  - **`format-json.js`** — Shared formatter: applies French typography (narrow NBSP U+202F before `!?;`, regular NBSP U+00A0 before `:`), auto-tags sonnets (exactly 14 verses → `"sonnet"`), idempotent. Run on any output JSON before seeding.
+  - **`lib/`** — Shared utilities: `poem-utils.js` (normalize typography, stanza builder, first verse extractor, Roman numerals, verse counter), `http.ts` (sleep, apiFetch with retry).
+  - **`format-json.js`** — Shared formatter: applies French typography, auto-tags sonnets, title disambiguation. Run on any output JSON before seeding.
   - **`seed.ts`** — Inserts JSON into Supabase. Supports `--from` (glob), `--author` override, `--reset` (with interactive confirmation). Never use `--reset` without explicit user approval.
 
 ## Conventions

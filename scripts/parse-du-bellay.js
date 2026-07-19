@@ -11,6 +11,7 @@
 
 const fs = require('fs')
 const path = require('path')
+const { normalizeLines, rebuildWithStanzas } = require('./lib/poem-utils')
 
 const TXT_DIR = path.resolve(__dirname, '..', 'data', 'txt')
 const OUTPUT = path.resolve(__dirname, '..', 'data', 'json', 'du-bellay.json')
@@ -19,37 +20,6 @@ const COLLECTIONS = {
   'du_bellay-les_regrets.txt': 'Les Regrets',
   'du_bellay-les_antiquites_de_rome.txt': 'Les Antiquités de Rome',
   'du_bellay-le_songe.txt': 'Le Songe',
-}
-
-/** Normalize line content: remove NBSP placeholders, collapse blank lines. */
-function normalizeLines(lines) {
-  return lines
-    .filter((l) => l.trim() !== '\u00a0')
-    .reduce((acc, l) => {
-      const prev = acc[acc.length - 1]
-      if (l.trim() === '' && prev === '') return acc
-      acc.push(l)
-      return acc
-    }, [])
-}
-
-/** Rebuild content with proper stanza breaks from flat verse lines.
- *  stanzaPattern = [4,4,3,3] means 4-verse stanza, 4-verse stanza, 3-verse stanza, 3-verse stanza.
- *  If the pattern doesn't cover all verses, it wraps (like CSS flex-wrap). */
-function rebuildWithStanzas(verses, stanzaPattern) {
-  const result = []
-  let idx = 0
-  let stanzaIdx = 0
-  while (idx < verses.length) {
-    const size = stanzaPattern[stanzaIdx % stanzaPattern.length]
-    const chunk = verses.slice(idx, idx + size)
-    if (chunk.length > 0) {
-      result.push(chunk.join('\n'))
-    }
-    idx += size
-    stanzaIdx++
-  }
-  return result.join('\n\n')
 }
 
 /** Split a pandoc TXT file into individual poems. */
@@ -69,7 +39,7 @@ function parseFile(filePath, collectionName) {
   if (collectionName === 'Les Regrets') {
     const linesText = bodyLines.join('\n')
 
-    // "À MONSIEUR D'AVANSON" — starts after the Latin epigraph, ends before "à son livre"
+    // "À MONSIEUR D'AVANSON"
     const avansonMatch = linesText.match(
       /À MONSIEUR D'AVANSON[\s\S]*?\n\n(Si je n'ai plus la faveur de la Muse[\s\S]*?)à son livre/i,
     )
@@ -77,13 +47,11 @@ function parseFile(filePath, collectionName) {
       const rawLines = avansonMatch[1].split('\n')
       const contentLines = normalizeLines(rawLines)
       if (contentLines.length > 0) {
-        // Strip leading blank lines
         while (contentLines.length > 0 && contentLines[0].trim() === '') contentLines.shift()
-        // Filter to flat verses only, then rebuild as 4-verse stanzas
-        const avansonVerses = contentLines.filter(l => l.trim() !== '')
+        const verses = contentLines.filter(l => l.trim() !== '')
         poems.push({
           title: 'À Monsieur d\'Avanson',
-          content: rebuildWithStanzas(avansonVerses, [4]),
+          content: rebuildWithStanzas(verses, [4]),
           language: 'fr',
           collection: collectionName,
         })
@@ -99,11 +67,10 @@ function parseFile(filePath, collectionName) {
       const contentLines = normalizeLines(rawLines)
       if (contentLines.length > 0) {
         while (contentLines.length > 0 && contentLines[0].trim() === '') contentLines.shift()
-        // Filter to flat verses only, then rebuild as sonnet: 4/4/3/3
-        const livreVerses = contentLines.filter(l => l.trim() !== '')
+        const verses = contentLines.filter(l => l.trim() !== '')
         poems.push({
           title: 'À son livre',
-          content: rebuildWithStanzas(livreVerses, [4, 4, 3, 3]),
+          content: rebuildWithStanzas(verses, [4, 4, 3, 3]),
           language: 'fr',
           collection: collectionName,
         })
@@ -112,14 +79,11 @@ function parseFile(filePath, collectionName) {
   }
 
   // ── Numbered poems ──
-  // Build segments starting at marker lines
   const segments = []
   let currentSegment = null
 
   for (const raw of bodyLines) {
     const line = raw.trimEnd()
-
-    // Stop at colophon
     if (line.toLowerCase().startsWith('à propos')) break
     if (line.includes('transcription et la mise en page')) break
 
@@ -136,7 +100,6 @@ function parseFile(filePath, collectionName) {
   for (const seg of segments) {
     const contentLines = normalizeLines(seg.lines)
     if (contentLines.length === 0) continue
-
     while (contentLines.length > 0 && contentLines[0].trim() === '') contentLines.shift()
     if (contentLines.length === 0) continue
 

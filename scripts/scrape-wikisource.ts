@@ -25,6 +25,7 @@
  */
 
 import { parse as parseHtml } from 'node-html-parser'
+import { sleep, apiFetch } from './lib/http'
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -59,37 +60,6 @@ const GITHUB_REPO = process.env.GITHUB_REPO ?? 'echos-du-parnasse'
 const USER_AGENT = `EchosDuParnasse/1.0 (https://github.com/${GITHUB_USER}/${GITHUB_REPO}; scraper for public-domain poems)`
 const RATE_LIMIT_MS = 1_200 // 1.2s between requests (respectful to Wikisource)
 
-// ── HTTP helpers ───────────────────────────────────────────────────
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms))
-}
-
-async function apiFetch(url: string): Promise<Response> {
-  const maxRetries = 3
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    const response = await fetch(url, {
-      headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
-    })
-    if (response.ok) return response
-    if (response.status === 429 && attempt < maxRetries) {
-      const retryAfter = Number(response.headers.get('Retry-After')) || 5
-      console.error(`⏳ Rate limited, waiting ${retryAfter}s...`)
-      await sleep(retryAfter * 1000)
-      continue
-    }
-    if (response.status >= 500 && attempt < maxRetries) {
-      console.error(`⏳ Server error ${response.status}, retrying...`)
-      await sleep(2_000 * attempt)
-      continue
-    }
-    throw new Error(
-      `Wikisource API error: ${response.status} ${response.statusText}`,
-    )
-  }
-  throw new Error('Max retries exceeded')
-}
-
 function apiUrl(params: Record<string, string>): string {
   const search = new URLSearchParams({ format: 'json', ...params })
   return `${WIKISOURCE_API}?${search.toString()}`
@@ -111,7 +81,7 @@ async function getCategoryPages(categoryTitle: string): Promise<PageInfo[]> {
     }
     if (cmcontinue) params.cmcontinue = cmcontinue
 
-    const data = await apiFetch(apiUrl(params)).then((r) => r.json())
+    const data = await apiFetch(apiUrl(params), USER_AGENT).then((r) => r.json())
     const members = (data.query?.categorymembers ?? []) as PageInfo[]
     for (const page of members) {
       if (page.title && page.pageid) pages.push(page)
@@ -141,7 +111,7 @@ async function getCollectionSubpages(
     }
     if (offset) params.psoffset = offset
 
-    const data = await apiFetch(apiUrl(params)).then((r) => r.json())
+    const data = await apiFetch(apiUrl(params), USER_AGENT).then((r) => r.json())
     const results = (data.query?.prefixsearch ?? []) as PageInfo[]
     for (const page of results) {
       if (page.title && page.pageid) pages.push(page)
@@ -166,7 +136,7 @@ async function fetchPageHtml(title: string): Promise<string | null> {
   })
 
   try {
-    const data = await apiFetch(url).then((r) => r.json())
+    const data = await apiFetch(url, USER_AGENT).then((r) => r.json())
     if (data.error) {
       console.error(`  ⚠ API error for "${title}": ${data.error.info}`)
       return null
