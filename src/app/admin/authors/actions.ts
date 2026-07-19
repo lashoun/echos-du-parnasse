@@ -91,6 +91,15 @@ export async function deleteAuthorAction(formData: FormData) {
 
   const supabase = await createSupabaseServerClient()
 
+  // Delete poems by this author (poem_tags refs are cascade-safe orphans)
+  const { error: poemError } = await supabase
+    .from('poems')
+    .delete()
+    .eq('author_id', authorId)
+  if (poemError) {
+    redirect('/admin/authors?error=' + encodeURIComponent(poemError.message))
+  }
+
   // Delete associated collections first
   const { error: collError } = await supabase
     .from('collections')
