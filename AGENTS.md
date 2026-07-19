@@ -37,9 +37,10 @@ Digital library for public-domain poetry (French-first). Next.js 16 + Supabase.
 - **`src/lib/admin.ts`** — Admin auth helpers: `getCurrentUser()` and `requireAdmin()` for protecting admin routes and server actions.
 - **`src/types/database.ts`** — Hand-crafted `Database` type for Supabase type inference.
 - **`src/app/robots.ts` + `src/app/sitemap.ts`** — robots.txt and sitemap generation. Sitemap fetches all poems, collections, authors, tags dynamically.
-- **`scripts/seed.ts`** — Standalone Node script. Reads JSON in two formats (single-object scraper output or array of sample entries). Handles `tags?: string[]` on poems: creates tags via `ensureTag()`, links via `linkPoemTag()`. Requires `--from` (glob patterns supported). Supports `--reset`.
-- **`scripts/scrape-wikisource.ts`** — Wikisource scraper. Uses page URL for titles (already correct French casing), preserves parenthetical disambiguation for uniqueness. Normalizes curly apostrophes, newlines. 1.2s rate limiting.
-- **`scripts/convert-latex-sonnets.js`** — LaTeX sonnet converter (no deps). Reads `data/latex/{author}.tex` files. Parses `\sonnet` commands with optional epigraphs, subtitle, and content. Title logic: empty reuses previous, roman numerals get `— ` separator, subtitles in `()`. Normalizes accents, `\\`/`\\!` to newlines, `\vin` to tab, `---`/`--` to em/en-dash. Adds French non-breaking spaces before punctuation (narrow U+202F for `!?;`, regular U+00A0 for `:`). Outputs JSON with `tags: ['sonnet']`.
+- **`scripts/`** — Data ingestion pipeline:
+  - **Source-specific parsers** per author/source: `convert-latex-sonnets.js` (LaTeX → JSON), `scrape-wikisource.ts` (Wikisource → JSON), `parse-du-bellay.js` (EPUB → TXT → JSON).
+  - **`format-json.js`** — Shared formatter: applies French typography (narrow NBSP U+202F before `!?;`, regular NBSP U+00A0 before `:`), auto-tags sonnets (exactly 14 verses → `"sonnet"`), idempotent. Run on any output JSON before seeding.
+  - **`seed.ts`** — Inserts JSON into Supabase. Supports `--from` (glob), `--author` override, `--reset` (with interactive confirmation). Never use `--reset` without explicit user approval.
 
 ## Conventions
 

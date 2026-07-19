@@ -15,6 +15,7 @@
 
 import dotenv from 'dotenv'
 import { createClient } from '@supabase/supabase-js'
+import * as readline from 'node:readline'
 
 dotenv.config({ path: '.env.local' })
 
@@ -383,7 +384,24 @@ async function main() {
           )
         })()
 
-  if (args.reset) await resetDatabase()
+  if (args.reset) {
+    // Safety confirmation for production database
+    console.log('⚠️  WARNING: This will DELETE ALL DATA and re-seed from scratch!')
+    console.log('    This should only be done in a controlled migration scenario.')
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    })
+    const answer = await new Promise<string>((resolve) => {
+      rl.question('Type "yes" to confirm: ', resolve)
+    })
+    rl.close()
+    if (answer.trim().toLowerCase() !== 'yes') {
+      console.log('Aborted.')
+      process.exit(0)
+    }
+    await resetDatabase()
+  }
   console.log('🌱 Seeding…\n')
   for (const f of files) await seedFromJSON(f, args.author)
   console.log('\n✨ Seeding complete!')
