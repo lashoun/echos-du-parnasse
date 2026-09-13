@@ -96,7 +96,7 @@ src/
 │   │   ├── server.ts     Server client (RSC, route handlers)
 │   │   └── client.ts     Browser client (client components)
 │   ├── use-poem-status.ts  Disjoint read/favorite hook (Supabase when logged in, localStorage when not)
-│   ├── use-preferences.ts  Display preferences hook (theme + poem font via next-themes)
+│   ├── use-preferences.tsx  Display preferences hook (theme + poem font via next-themes)
 │   └── utils.ts          Shared helpers
 ├── proxy.ts              Supabase auth session refresh
 ├── lib/admin.ts          Admin auth helpers (getCurrentUser, requireAdmin)
@@ -132,6 +132,7 @@ supabase/
 | `/`                     | Homepage — daily featured poem, nav links                                                |
 | `/poems`                | Browse, search & filter all poems (multi-select chips, pagination 50/page) + random poem |
 | `/poems/[id]`           | Poem detail + prev/next nav                                                              |
+| `/search`              | Redirects to `/poems`                                                                    |
 | `/collections`          | Collection listing                                                                       |
 | `/collections/[id]`     | Collection detail with ordered poems                                                     |
 | `/tags/[id]`            | Poems by tag                                                                             |
@@ -170,10 +171,10 @@ Library tables have public read access. User data is owner-only via RLS. Admin t
 | Variable              | Required for | Used by             |
 | --------------------- | ------------ | ------------------- |
 | `SUPABASE_URL`        | Seed only    | `scripts/seed.ts`   |
-| `SUPABASE_SECRET_KEY` | Seed only    | `scripts/seed.ts`   |
-| `SITE_URL`            | Production   | Auth redirects      |
-| `GITHUB_USERNAME`     | /about page  | GitHub links (user) |
-| `GITHUB_REPO`         | /about page  | GitHub links (repo) |
+| `SUPABASE_SECRET_KEY` | Yes (prod)  | `scripts/seed.ts`, account deletion, `/admin` routes    |
+| `SITE_URL`            | Production  | Auth redirects, canonical URL, sitemap                  |
+| `GITHUB_USERNAME`     | /about, /legal, scrape | GitHub repo links + scraper User-Agent        |
+| `GITHUB_REPO`         | /about, /legal, scrape | GitHub repo links + scraper User-Agent        |
 
 ## Design Principles
 
