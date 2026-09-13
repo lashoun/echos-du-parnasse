@@ -54,6 +54,7 @@ Digital library for public-domain poetry (French-first). Next.js 16 + Supabase.
 - **Supabase queries:** No `Database` generic on `createServerClient` — type inference from plain `.select('col1, col2')` works without it.
 - **Env vars:** `NEXT_PUBLIC_*` for browser-safe vars. `SITE_URL` for production URL (auth redirects, canonical, sitemap). `GITHUB_USERNAME` for `/about` + `/legal` links and the scraper User-Agent. `getSupabaseConfig()` returns null during build/static gen.
 - **Formatting:** Prettier 3 with `semi: false`, `singleQuote: true`, `tabWidth: 2`, `trailingComma: all`, `prettier-plugin-tailwindcss`.
+- **Commit messages:** Bare lowercase imperative, no prefix (repo style, e.g. "add display UI"). One concern per commit — split when a subject needs a comma to hold two ideas. Non-trivial changes (2+ files or a non-obvious why) get a short body: draft the full message and show it to the user for approval before committing. No Claude/co-author attribution.
 - **Tailwind:** v4 CSS-first config (`@import 'tailwindcss'` + `@theme inline` block). Dark mode via class-based `.dark` strategy (controlled by `next-themes`). Custom theme tokens (`--color-primary`, `--color-muted`, etc.).
 - **Error handling:** Root `loading.tsx` + per-route `error.tsx` and `loading.tsx` for `/poems` and `/poems/[id]`.
 - **Strings:** All user-facing text in French.
