@@ -48,3 +48,10 @@ yarn-error.log*
 !/data/json
 # Temp check scripts
 /scripts/temp
+
+# ── rpiv workflow artifacts ─────────────────────────────
+# Generated pipeline state (plans, reviews, run logs) — not source.
+# Keep deliberate team workflow config versioned via negations:
+.rpiv/
+!.rpiv/workflows/config.ts
+!.rpiv/workflows/packs/
