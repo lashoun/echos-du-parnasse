@@ -79,4 +79,4 @@ Digital library for public-domain poetry (French-first). Next.js 16 + Supabase.
 
 - **License:** GNU GPLv3 — see [LICENSE](./LICENSE).
 - **Deployment:** Vercel recommended. Set `SITE_URL` in Vercel env vars. Update Supabase Auth URL Configuration in dashboard.
-- **rpiv onboarding:** The maintainer is not yet familiar with the rpiv workflow (stage skills like discover → research → design → plan → implement → validate, `.rpiv/artifacts/` documents, `/wf` workflows). When rpiv comes up, briefly explain what each stage does and why — don't assume prior familiarity.
+- **rpiv workflow:** The maintainer is not yet familiar with the rpiv workflow (stage skills like discover → research → design → plan → implement → validate, `.rpiv/artifacts/` documents, `/wf` workflows) but has decided to use it from now on. Drive product work through the rpiv stage skills by default, and briefly explain what each stage does and why — don't assume prior familiarity.
